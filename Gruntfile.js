@@ -37,13 +37,13 @@ module.exports = function(grunt) {
           cwd: '<%= src %>',
           dest: '<%= trgt %>',
           src: [
-            '*.{ico,png,txt,html,xml}',
+            '*.{ico,png,txt,html,htm,xml}',
             'CNAME',
-            'content/{,*/}*.css',
-            'app/{,*/}*',
-            '.htaccess',
-            'img/{,*/}*.{webp,gif,jpg}',
-            'fonts/*.*'
+            'fonts/**/*',
+            'images/**/*',
+            'js/**/*',
+            'scripts/**/*',
+            'content/**/*'
           ]
         }]
       },

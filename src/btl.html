@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Баттл "Естественный". Текстовый баттл. Аудиобаттл. Битмейкер-баттл.</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="Content/site.min.css" rel="stylesheet" />
+    <link href="Content/rateit.min.css" rel="stylesheet" />
+    <link href="scripts/mediaelementjs/mediaelementplayer.min.css" rel="stylesheet" />
+    <script src="scripts/modernizr-2.6.2.min.js"></script>
+    <script src="scripts/json2.min.js"></script>
+    <script src="scripts/jquery-2.0.3.min.js"></script>
+    <script src="scripts/moment.min.js"></script>
+    <script src="scripts/plugins.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
+    <script src="https://vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
+    <script src="scripts/jquery.rateit.min.js"></script>
+    <script src="scripts/knockout-2.3.0.js"></script>
+    <script src="scripts/app/base.js?6"></script>
+    <script src="scripts/app/vk_main.js"></script>
+    <script src="scripts/app/btl.datacontext.js?6"></script>
+    <script src="scripts/app/btl.model.js?1"></script>
+    <script src="scripts/app/btl.viewmodel.js"></script>
+    <script src="scripts/mediaelementjs/mediaelement-and-player.min.js"></script>
+</head>
+<body>
+    <!--[if lt IE 9]><p class="chromeframe">You are using an <strong>outdated</strong> browser. Please upgrade your browser.</p><![endif]-->
+    <div id="system_msg" class="fixed">
+    </div>
+    <div id="wrap">
+        <div id="spinner" class="fixed spinner">
+        </div>
+        <div id="out_window" class="show_window out_window_class" style="display: none">
+            <div id="out_header" class="out_header_class clearfix">
+                <div class="pull-left">
+                    <span id="out_header_name" class="out_header_name_class"></span>
+                </div>
+                <div class="pull-right">
+                    <span class="link_view" style="display: inline-block; color: #fff" onclick="out_window_hide()">Закрыть</span>
+                </div>
+            </div>
+            <div id="out_content" class="out_content_class flow_window_class">
+            </div>
+        </div>
+        <div id="flow_window" class="show_window flow_window_class" style="display: none">
+            <div id="flow_header" class="out_header_class clearfix">
+                <div class="pull-left">
+                    <span id="flow_header_name" class="out_header_name_class"></span>
+                </div>
+                <div class="pull-right">
+                    <span class="link_view" style="display: inline-block; color: #fff" onclick="flow_window_hide()">Закрыть</span>
+                </div>
+            </div>
+            <div id="flow_content" class="out_content_class flow_window_class">
+            </div>
+        </div>
+        <!--[if lt IE 9]><div class="popup__overlay popup__overlay_ie"></div><![endif]-->
+        <div class="popup__overlay">
+            <div class="popup">
+                <div class="clearfix">
+                    <div class="pull-left">
+                        <h5 style="padding: 0" id="popup_header"></h5>
+                    </div>
+                    <div class="pull-right">
+                        <span class="link_view" onclick="$('.popup__overlay').hide();">Закрыть</span>
+                    </div>
+                </div>
+                <div style="margin-top: 16px">
+                    <div id="popup_content">
+                    </div>
+                </div>
+            </div>
+            <!--[if lt IE 9]><div class="popup__valignfix"></div><![endif]-->
+        </div>
+        <div class="clearfix" style="padding: 4px 10px; height: 16px; background-color: #fefefe" data-bind="with: currentUserProfile">
+            <div class="pull-left">
+                <span data-bind="if: nickName()" class="link_view" onclick="show_settings()"><span data-bind="    text: nickName()"></span><span style="margin-left: 8px" data-bind="    text: beatmakerName()"></span></span>
+            </div>
+            <div class="pull-right">
+                <!--<span class="link_view" style="display: none" onclick="show_top()">Топ</span>-->
+                <span class="link_view" onclick="show_settings()">Настройки баттла</span>
+                <span class="divider">|</span>
+                <span class="link_view" data-bind="click: showBalanceModal"><span>У Вас </span><span data-bind="    text: balance() + plural_number(balance(), ' монет', '', 'ы', '')"></span></span>
+            </div>
+        </div>
+        <div class="clearfix" style="background-color: #517597">
+            <div class="pull-left header_link" title="На главную" onclick="show_cabinet()">Battle</div>
+            <div class="pull-right" style="width: 560px">
+                <div class="pull-left" style="width: 20px; height: 50px; background-color: #517597"></div>
+                <div class="pull-left" style="width: 540px; background-color: #517597">
+                    <div class="clearfix">
+                        <div class="pull-left">
+                            <div class="ellipsis_title" style="padding: 4px 0 2px 8px; height: 11px; width: 444px; color: #f1f1f1; max-width: 444px"
+                                 id="player_comment">
+                            </div>
+                        </div>
+                        <div class="pull-right" style="width: 20px">
+                            <div style="height: 12px; padding: 3px 0 2px 0">
+                                <a href="#" id="bj_beat_page_link" target="_blank" style="display: none" title="перейти на страницу исполнителя">
+                                    <img src="Images/iel.png" alt=">" />
+                                </a>
+                            </div>
+                        </div>
+                        <div class="pull-right" style="width: 20px">
+                            <div style="height: 11px; padding: 4px 0 2px 2px">
+                                <span id="bj_comment_track_link" class="copy_track_link" style="display: none; font-size: 11px;"
+                                      title="Комментарии">К</span>
+                            </div>
+                        </div>
+                        <div class="pull-right" style="width: 20px">
+                            <div style="height: 11px; padding: 4px 0 2px 2px">
+                                <span id="bj_track_text" class="copy_track_link" style="display: none; font-size: 11px;"
+                                      title="Текст">Т</span>
+                            </div>
+                        </div>
+                        <div class="pull-right" style="width: 20px">
+                            <div style="height: 15px; padding: 2px 0 0 0">
+                                <span id="bj_copy_track_link" class="copy_track_link" style="display: none; font-size: 15px;"
+                                      title="добавить в мои аудиозаписи">+</span>
+                            </div>
+                        </div>
+                        <div class="fl_cl">
+                        </div>
+                    </div>
+                    <div style="height: 33px; width: 540px; color: #517597">
+                        <div id="hiphop_player" style="display: none">
+                            <audio id="battleplayer" src="content/gimn.mp3" style="width: 540px; height: 32px;"></audio>
+                        </div>
+                        <div id="hiphopplayer" style="display: none" class="clearfix">
+                            <div class="pull-left">
+                                <div class="right_arrow_wrap" title="Прослушать" id="player_replacer">
+                                    <div class="right_arrow"></div>
+                                </div>
+                            </div>
+                            <div class="pull-left">
+                                <div class="ellipsis_title" id="hiphopplayer_title" style="width: 500px; max-width: 500px; color: #f1f1f1">
+                                </div>
+                                <div style="color: #bebebe; font-size: 10px; width: 500px; max-width: 500px; height: 20px; overflow: hidden; white-space: nowrap;" id="hiphopplayer_title_note">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="event_msg_block">
+        </div>
+        <div data-bind="with: selectedBattleSeason">
+            <div id="battle_description" style="display: none; padding: 10px" class="clearfix">
+                <div class="header-block-light clearfix" style="margin-bottom: 8px; padding: 0 16px">
+                    <h5 class="pull-left"><span data-bind="    text: btlTypeLink().fullTitle"></span>&nbsp;<span style="font-weight: bold" data-bind="    text: fullBtlName"></span></h5>
+                    <h5 class="pull-right" data-bind="if: roundCount > 1"><span class="link_view" data-bind="    click: showTournamentTable">Турнирная таблица</span></h5>
+                </div>
+                <div class="clearfix">
+                    <div class="pull-left" style="width: 180px; padding-right: 9px; border-right: 1px solid #D9E0E7;">
+                        <ul class="nav nav-tabs nav-stacked">
+                            <li class="active"><a href="#btm_round" data-toggle="tab">Текущий раунд</a></li>
+                            <li><a href="#btm_prize" data-toggle="tab">Призы</a></li>
+                            <!-- ko if: isWorkBattle -->
+                            <li><a href="#btm_history" data-toggle="tab" data-bind="click: getHistoryBattleRoundList">Прошедшие раунды</a></li>
+                            <li><a href="#btm_rules" data-toggle="tab" data-bind="click: getRuleList">Правила</a></li>
+                            <li><a href="#btm_notes" data-toggle="tab" data-bind="click: getNoteList">Примечания</a></li>
+                            <li data-bind="if: ((btlType === 'text_battle') || (btlType === 'audio_battle'))"><a href="#btm_theory" data-toggle="tab" data-bind="    click: getTheoryList">Написание текстов: теория</a></li>
+                            <li data-bind="if: btlType === 'text_battle'"><a href="#btm_theme_suggestion" data-toggle="tab">Предложить вариант темы</a></li>
+                            <!-- /ko -->
+                            <li><a href="#btm_beatcatalog" data-toggle="tab" onclick="beat_catalog_show_beatmaker('btm_beatcatalog')">Каталог битов</a></li>
+                        </ul>
+                    </div>
+                    <div class="pull-left" style="width: 540px; padding-left: 10px">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="btm_round" data-bind="with: currentBattleRound">
+                                <div class="header_dark_on_white">Текущий раунд</div>
+                                <div class="pad-wrap">
+                                    <div data-bind="foreach: themeList" class="clearfix">
+                                        <div class="theme-block">
+                                            <h4 data-bind="text: name"></h4>
+                                            <small>тема раунда</small>
+                                        </div>
+                                    </div>
+                                    <div data-bind="if: themeList.length === 0" class="clearfix">
+                                        <div class="theme-block">
+                                            <h4>Свободная</h4>
+                                            <small>тема раунда</small>
+                                        </div>
+                                    </div>
+                                    <div class="clearfix" style="margin-top: 4px; text-align: center;">
+                                        <div class="round-date">
+                                            <span>Начало раунда</span>
+                                            <br />
+                                            <span data-bind="text: moment(startUnixTime * 1000).format('DD.MM.YYYY HH:mm')"></span>
+                                        </div>
+                                        <div class="round-date">
+                                            <span>Срок сдачи</span>
+                                            <br />
+                                            <span data-bind="text: moment(lastUnixTime * 1000).format('DD.MM.YYYY HH:mm')"></span>
+                                        </div>
+                                        <div class="round-date">
+                                            <span>Закрытие раунда</span>
+                                            <br />
+                                            <span data-bind="text: moment(endUnixTime * 1000).format('DD.MM.YYYY HH:mm')"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 8px" class="clearfix">
+                                    <div class="pull-left" style="width: 260px">
+                                        <div class="header_dark_on_white">Участие: <span data-bind="text: activeRoundMaterialCount() + plural_number(activeRoundMaterialCount(), ' участник', '', 'а', 'ов')"></span></div>
+                                        <div class="pad-wrap">
+                                            <div data-bind="if: authUserRoundMaterial() !== undefined">
+                                                <div data-bind="if: authUserRoundMaterial() !== null">
+                                                    <div data-bind="with: authUserRoundMaterial">
+                                                        <!-- ko if: isBlocked() === true -->
+                                                        <p>Произведение снято с участия в связи с нарушением правил. По всем вопросам обращаться к администрации баттла.</p>
+                                                        <!-- /ko -->
+                                                        <!-- ko if: isBlocked() === false -->
+                                                        <button type="button" class="btn" data-bind="text: menuTitle + ': +' + voiceProCount() + ' / ' + voiceConCount(), click: show"></button>
+                                                        <!-- /ko -->
+                                                    </div>
+                                                </div>
+                                                <div data-bind="if: authUserRoundMaterial() === null">
+                                                    <button type="button" class="btn" data-bind="click: showPassForm">Форма сдачи...</button>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: left; margin-top: 4px;">
+                                                <h5>Требования к произведению:</h5>
+                                                <div data-bind="html: passRequirements"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pull-right" style="width: 260px">
+                                        <div class="header_dark_on_white">Судейство</div>
+                                        <div class="pad-wrap">
+                                            <div>
+                                                <button type="button" class="btn" data-bind="click: showJudgeForm">Судейство...</button>
+                                            </div>
+                                            <div style="text-align: left; margin-top: 4px;">
+                                                <h5>Судейство:</h5>
+                                                <div data-bind="html: judgingDesc"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="btm_prize">
+                                <div data-bind="html: prize"></div>
+                            </div>
+                            <!-- ko if: isWorkBattle -->
+                            <div class="tab-pane" id="btm_history">
+                                <div class="clearfix" style="border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc">
+                                    <div class="pull-left" style="width: 140px; height: 460px; overflow: auto; overflow-x: hidden">
+                                        <div data-bind="foreach: historyBattleRoundList">
+                                            <div class="book_pile_item" data-bind="click: showRating">
+                                                <div data-bind="foreach: themeList">
+                                                    <span data-bind="text: name"></span>
+                                                </div>
+                                                <div class="book_date_sign clearfix">
+                                                    <div class="pull-left">#<small data-bind="text: parseInt($parent.historyBattleRoundList().length, 10) - parseInt($context.$index(), 10)"></small></div>
+                                                    <div class="pull-right"><small data-bind="text: moment(startUnixTime * 1000).format('DD.MM.YYYY')"></small></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pull-right" style="width: 390px; height: 460px; overflow: auto; overflow-x: hidden" id="round_history_block">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="btm_rules">
+                                <div data-bind="html: ruleList"></div>
+                            </div>
+                            <div class="tab-pane" id="btm_notes">
+                                <div data-bind="html: noteList"></div>
+                            </div>
+                            <div data-bind="if: ((btlType === 'text_battle') || (btlType === 'audio_battle'))" class="tab-pane" id="btm_theory">
+                                <div data-bind="    html: theoryList"></div>
+                            </div>
+                            <div data-bind="if: btlType === 'text_battle'" class="tab-pane" id="btm_theme_suggestion">
+                                <h5>Выбор темы</h5>
+                                <p>Форма добавления вариантов тем. Предложенный вариант может быть поставлен на голосование за тему любого из последующих раундов по решению администрации баттла.</p>
+                                <div>Ограничения:</div>
+                                <ul class="listing">
+                                    <li>максимальная длина: 30 символов</li>
+                                    <li>вариант не должен повторять темы предыдущих раундов</li>
+                                    <li>приемлемое содержание темы (цензура и т.п.)</li>
+                                </ul>
+                                <h5>Вариант темы для баттла:</h5>
+                                <input type="text" maxlength="30" data-bind="value: themeToSuggest" />
+                                <br />
+                                <button type="button" class="btn btn-primary" data-bind="click: suggestTheme">Предложить тему</button>
+                            </div>
+                            <!-- /ko -->
+                            <div class="tab-pane" id="btm_beatcatalog"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="ext_text_battle" style="display: none">
+                    <div class="clearfix" style="margin-top: 10px" data-bind="with: currentBattleRound">
+                        <div data-bind="if: authUserRoundMaterial() !== undefined">
+                            <div data-bind="with: authUserRoundMaterial" class="clearfix">
+                                <div class="pull-left left_side">
+                                    <div data-bind="with: materialLink">
+                                        <div class="clearfix">
+                                            <div class="header_dark_on_white pull-left" style="width: 174px;">
+                                                <span data-bind="text: mname"></span>
+                                            </div>
+                                            <div class="header_dark_on_white pull-right" style="width: 140px; text-align: center">
+                                                <span class="link_view" style="font-weight: normal" data-bind="click: wallPost">опубликовать на стену</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flow_text_ready_class text_battle_flow_block" style="width: auto" data-bind="html: mcontent"></div>
+                                        </div>
+                                        <div class="header_dark_on_white clearfix">
+                                            <div class="pull-left">Оценки (+<span data-bind="text: $parent.voiceProCount()"></span>/<span data-bind="    text: $parent.voiceConCount()"></span>):</div>
+                                        </div>
+                                        <div data-bind="foreach: boutUnitList" class="comment_list comment_list_for_battle">
+                                            <div class="comment_unit">
+                                                <div class="clearfix">
+                                                    <div class="pull-left">
+                                                        <span data-bind="if: isWin === true"><i class="icon-thumbs-up"></i></span>
+                                                        <span data-bind="if: isWin === false"><i class="icon-thumbs-down"></i></span>
+                                                        <span style="font-style: italic" data-bind="text: cmaNickName"></span>
+                                                        <span data-bind="    if: cmaNickName">: </span>
+                                                        <!-- ko if: isOpen === true -->
+                                                        <span data-bind="text: commentText"></span>
+                                                        <!-- /ko -->
+                                                        <!-- ko if: isOpen === false -->
+                                                        <span class="link_view" data-bind="click: open">Показать оценку и комментарий (стоимость: <span data-bind="    text: openPrice + plural_number(openPrice, ' монет', '', 'ы', '')"></span>)</span>
+                                                        <!-- /ko -->
+                                                    </div>
+                                                </div>
+                                                <div class="clearfix comment-top">
+                                                    <div class="pull-right comment_rating" data-bind="if: isOpen === true">
+                                                        <span data-bind="text: (ratingRhyme || '*')"></span>/<span data-bind="    text: (ratingTheme || '*')"></span>/<span data-bind="    text: (ratingGeneral || '*')"></span>
+                                                    </div>
+                                                    <div class="pull-right">
+                                                        <span data-bind="text: moment(createDate).format('DD.MM HH:mm:SS')"></span>
+                                                    </div>
+                                                    <div class="pull-right" style="margin-right: 8px;">
+                                                        <span class="link_view" data-bind="click: getRivalFlow">соперник</span>
+                                                    </div>
+                                                    <div class="pull-right" style="margin-right: 8px;" data-bind="if: (isOpen === true) && (pricePlus() === null)">
+                                                        <span class="link_view" data-bind="click: estimate">оценить комментарий</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pull-right right_side">
+                                    <div id="rating_stars_block" style="display: none">
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-bind="if: authUserRoundMaterial() === null">
+                                <div class="pull-left left_side">
+                                    <div class="textwrapper">
+                                        <textarea rows="16" cols="1" id="flow_text" placeholder="Мой текст для участия в баттле..."
+                                                  readonly="readonly"></textarea>
+                                    </div>
+                                    <div style="margin-top: 5px">
+                                        <button class="btn" style="display: none" title="редактировать текст" id="flow_text_edit_link" onclick="text_edit_show()">редактировать текст</button>
+                                        <div id="save_cancel" style="display: none" class="clearfix">
+                                            <div class="pull-left" style="font-size: 10px">
+                                                <span style="font-size: 10px" id="leave_symbol">&nbsp;</span>
+                                                <div>Количество строк:</div>
+                                                <ul class="listing">
+                                                    <li>минимальное - 12 (300 символов)</li>
+                                                    <li>максимальное - 20 (1500 символов)</li>
+                                                </ul>
+                                            </div>
+                                            <div class="pull-right">
+                                                <button class="btn btn-primary" onclick="save_text_current_battle()">сохранить</button>
+                                                <button class="btn" style="margin-left: 10px" onclick="text_battle_creation()">отмена</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pull-right right_side">
+                                    <div id="send_text_div" class="block_style" style="display: none">
+                                        <p style="text-align: justify">
+                                            Для участия необходимо предоставить текст, соответствующий заданной теме. Текст
+                                            выставляется на оценку и не может быть изменен в дальнейшем. Сдавая текст на участие
+                                            Вы подтверждаете, что ознакомлены с <span class="link_view" onclick="show_out_window('about.html')">правилами баттла</span>
+                                        </p>
+                                        <div style="margin-top: 5px; text-align: center">
+                                            <button type="button" class="btn btn-primary" id="send_text_to_battle_button" onclick="this.disabled=true; send_text_to_battle()">
+                                                Сдать текст на участие
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_text_battle" style="display: none">
+                    <div id="text_battle_judging_block">
+                        <div style="margin-top: 5px">
+                            <div class="pull-left left_side">
+                                <div>
+                                    <div class="header_dark_on_white pull-left" id="text_battle_j_header_1" style="width: 174px">
+                                        &nbsp;
+                                    </div>
+                                    <div class="pull-right" style="padding-top: 8px">
+                                        <span class="link_view judging_claim" id="text_battle_claim_1">
+                                            заявить о нарушении правил
+                                        </span>
+                                    </div>
+                                    <div class="fl_cl"></div>
+                                </div>
+                                <div id="flow_text_ready_1" class="flow_text_ready_class text_battle_flow_block">
+                                </div>
+                            </div>
+                            <div class="pull-right right_side">
+                                <div id="text_battle_rating_stars_1" style="margin-top: 22px">
+                                </div>
+                                <div style="margin-top: 5px">
+                                    <div class="pull-left">
+                                        <label for="text_battle_judging_comment_1">
+                                            Комментарий:
+                                        </label>
+                                    </div>
+                                    <div class="fl_cl"></div>
+                                </div>
+                                <div style="margin-top: 3px">
+                                    <textarea id="text_battle_judging_comment_1" placeholder="Комментарий для первого варианта"
+                                              class="rating_comment"></textarea>
+                                </div>
+                                <div>
+                                    <label class="checkbox">
+                                        <input id="text_battle_comment_sign_1" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="fl_cl">
+                            </div>
+                        </div>
+                        <div class="clearfix">
+                            <div class="pull-left left_side">
+                                <div style="font-size: 10px; padding: 3px">
+                                    <div>
+                                        &nbsp;
+                                    </div>
+                                    <div>
+                                        <span style="color: red" id="text_battle_ocenka_msg"></span><span>&nbsp;</span>
+                                    </div>
+                                    <div>
+                                        &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pull-right right_side">
+                                <div class="clearfix">
+                                    <div class="pull-left" style="width: 190px; padding: 4px 0;">
+                                        <button id="text_battle_send_golos" class="btn" disabled="disabled" style="width: 180px; padding: 4px; margin: 0;">
+                                            Оценить <span id="text_battle_timer_block"></span>
+                                        </button>
+                                    </div>
+                                    <div class="pull-right" style="width: 27px; padding: 3px 0">
+                                        <div id="text_battle_itog_rating_1" class="itog_rating_up">
+                                            0
+                                        </div>
+                                        <div id="text_battle_itog_rating_2" class="itog_rating_down">
+                                            0
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix">
+                            <div class="pull-left left_side">
+                                <div class="clearfix">
+                                    <div class="header_dark_on_white pull-left" id="text_battle_j_header_2" style="width: 174px">
+                                        &nbsp;
+                                    </div>
+                                    <div class="pull-right" style="padding-top: 8px">
+                                        <span class="link_view judging_claim" id="text_battle_claim_2">
+                                            заявить о нарушении правил
+                                        </span>
+                                    </div>
+                                </div>
+                                <div id="flow_text_ready_2" class="flow_text_ready_class text_battle_flow_block">
+                                </div>
+                            </div>
+                            <div class="pull-right right_side">
+                                <div id="text_battle_rating_stars_2" style="margin-top: 22px;">
+                                </div>
+                                <div style="margin-top: 5px" class="clearfix">
+                                    <div class="pull-left">
+                                        <label for="text_battle_judging_comment_2">
+                                            Комментарий:
+                                        </label>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 3px">
+                                    <textarea id="text_battle_judging_comment_2" placeholder="Комментарий для второго варианта"
+                                              class="rating_comment"></textarea>
+                                </div>
+                                <div>
+                                    <label class="checkbox">
+                                        <input id="text_battle_comment_sign_2" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding-top: 4px">
+                            <span style="color: #555">*если не определились с выбором, можно единожды </span>
+                            <span class="link_view" onclick="text_battle_judging(true)">
+                                изменить пару участников
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_text_battle" style="display: none">
+                    <div>
+                        <div id="text_battle_rating_status" class="pull-left link_view" onclick="get_text_battle_uch_status()">
+                            Cтатус в турнире: отбор
+                        </div>
+                        <div id="text_battle_rating_string" class="pull-right"></div>
+                        <div class="fl_cl"></div>
+                    </div>
+                    <div id="ext_rating">
+                        <div>
+                            <table class="playoff_tbl">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_64">&nbsp;</span>
+                                            <span title="Результаты 1/64" class="pull-left" style="padding: 5px">1/64</span><span class="pull-left" style="padding: 5px 0">
+                                                <span id="text_battle_grade_1_64" class="th_link"></span>
+                                            </span><span style="clear: both"></span>
+                                        </th>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_32">&nbsp;</span>
+                                            <span title="Результаты 1/32" class="pull-left" style="padding: 5px">1/32</span><span class="pull-left" style="padding: 5px 0">
+                                                <span id="text_battle_grade_1_32" class="th_link"></span>
+                                            </span><span style="clear: both"></span>
+                                        </th>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_16">&nbsp;</span>
+                                            <span title="Результаты 1/16" class="pull-left" style="padding: 5px">1/16</span><span class="pull-left" style="padding: 5px 0">
+                                                <span id="text_battle_grade_1_16" class="th_link"></span>
+                                            </span><span style="clear: both"></span>
+                                        </th>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_8">&nbsp;</span>
+                                            <span title="Результаты 1/8" class="pull-left" style="padding: 5px">1/8</span><span class="pull-left"
+                                                                                                                                style="padding: 5px 0"><span id="text_battle_grade_1_8" class="th_link"></span></span><span style="clear: both">
+                                            </span>
+                                        </th>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_4">&nbsp;</span>
+                                            <span title="Результаты 1/4" class="pull-left" style="padding: 5px">1/4</span><span class="pull-left"
+                                                                                                                                style="padding: 5px 0"><span id="text_battle_grade_1_4" class="th_link"></span></span><span style="clear: both">
+                                            </span>
+                                        </th>
+                                        <th>
+                                            <span class="itog_sign pull-right" style="margin: 2px 4px" id="sign_1_2">&nbsp;</span>
+                                            <span title="Результаты 1/2" class="pull-left" style="padding: 5px">1/2</span><span class="pull-left"
+                                                                                                                                style="padding: 5px 0"><span id="text_battle_grade_1_2" class="th_link"></span></span><span style="clear: both">
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td rowspan="2">
+                                            <div class="tt_block" id="text_battle_winners_1_64">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td rowspan="2">
+                                            <div class="tt_block" id="text_battle_winners_1_32">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td rowspan="2">
+                                            <div class="tt_block" id="text_battle_winners_1_16">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="tt_block" id="text_battle_winners_1_8">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="tt_block" id="text_battle_winners_1_4">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="height: 100px">
+                                            <div class="tt_block" id="text_battle_winners_1_2">
+                                                <div class="upload_progress">
+                                                    &nbsp;
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div>
+                                                <div style="background-color: #5D81A7; padding: 4px; text-align: center">
+                                                    <span title="Результаты финала" style="color: #fff; font-weight: bold">Финал</span>
+                                                    <span style="margin-left: 2px;" class="th_link" onclick="get_otbor_round_table(1, 'text_battle')">оценки</span>
+                                                </div>
+                                                <div>
+                                                    <div class="pull-left">
+                                                        <div style="text-align: center; margin: 4px 0 1px 12px; width: 160px;">
+                                                            <div class="header_white_on_blue">
+                                                                Победитель финала
+                                                            </div>
+                                                            <div style="border: 1px solid #36638E; background-color: #fff; padding: 5px; border-radius: 0 0 5px 5px;">
+                                                                <div id="battle_place_0" style="padding: 5px 0">
+                                                                    <div class="upload_progress">
+                                                                        &nbsp;
+                                                                    </div>
+                                                                </div>
+                                                                <div id="priz_battle_place_0" style="text-align: right; font-size: 10px">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="pull-right">
+                                                        <div style="text-align: center; margin: 4px 12px 1px 0; width: 160px">
+                                                            <div class="header_white_on_blue">
+                                                                Второе место
+                                                            </div>
+                                                            <div style="border: 1px solid #36638E; background-color: #fff; padding: 5px; border-radius: 0 0 5px 5px;">
+                                                                <div id="battle_place_1" style="padding: 5px 0">
+                                                                    <div class="upload_progress">
+                                                                        &nbsp;
+                                                                    </div>
+                                                                </div>
+                                                                <div id="priz_battle_place_1" style="text-align: right; font-size: 10px">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fl_cl"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="font-size: 10px">
+                            <span class="font_bold">Примечание:</span><span>
+                                &nbsp;баттл представляет собой зацикленную
+                                систему плей-офф: вместе с началом каждого раунда начинается новый турнир, что позволяет
+                                желающим вступить в баттл в любой момент, а проигравшим - сразу же начать заново
+                                (подробнее в <span class="link_view" onclick="show_out_window('about.html')">
+                                    правилах
+                                    баттла
+                                </span>)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="ext_audio_battle" style="display: none">
+                    <div>
+                        <div class="pull-left left_side">
+                            <div>
+                                <div class="right_arrow_wrap" id="ac_player_play" style="display: none; margin: 4px 0"
+                                     title="Прослушать свой трек">
+                                    <div class="prepause pull-left"></div>
+                                    <div class="right_arrow pull-left"></div>
+                                    <div class="fl_cl"></div>
+                                </div>
+                            </div>
+                            <div id="ac_comments" class="comment_list comment_list_for_battle" style="display: none">
+                            </div>
+                        </div>
+                        <div class="pull-right right_side">
+                            <div id="audio_battle_voice_block" class="block_style" style="display: none">
+                            </div>
+                            <div id="ac_rating_stars_block" style="display: none">
+                            </div>
+                        </div>
+                        <div class="fl_cl">
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_audio_battle" style="display: none">
+                    <div id="audio_battle_judging_block">
+                        <div style="margin-top: 5px">
+                            <div class="pull-left three-side">
+                                <div>
+                                    <div>
+                                        <div class="pull-left">
+                                            <div id="audio_battle_judging_player_1_run" class="right_arrow_wrap" style="display: none"
+                                                 title="Прослушать аудиозапись">
+                                                <div class="prepause pull-left"></div>
+                                                <div class="right_arrow pull-left"></div>
+                                                <div class="fl_cl"></div>
+                                            </div>
+                                        </div>
+                                        <div class="pull-left uchastnik_number">Участник №1</div>
+                                        <div class="fl_cl"></div>
+                                    </div>
+                                    <div style="padding: 2px 10px 2px 5px; border: 1px dashed #517597">
+                                        <div id="audio_battle_rating_stars_1">
+                                        </div>
+                                        <div style="margin-top: 5px">
+                                            <div class="pull-left">
+                                                <label for="audio_battle_judging_comment_1">
+                                                    Комментарий:
+                                                </label>
+                                            </div>
+                                            <div class="fl_cl"></div>
+                                        </div>
+                                        <div style="margin-top: 3px">
+                                            <textarea id="audio_battle_judging_comment_1" placeholder="Комментарий для первого варианта"
+                                                      class="rating_comment"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="checkbox">
+                                                <input id="audio_battle_comment_sign_1" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right">
+                                        <span class="link_view judging_claim" id="audio_battle_claim_1">
+                                            заявить о нарушении
+                                            правил
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pull-left three-center">
+                                <div style="margin-top: 24px">
+                                    <div class="clearfix">
+                                        <div id="audio_battle_itog_rating_1" class="itog_rating">
+                                            0
+                                        </div>
+                                        <div style="display: inline-block">
+                                            <button class="btn" id="audio_battle_send_golos" disabled="disabled" style="width: 130px; padding: 4px; margin: 0">
+                                                Оценить <span id="audio_battle_timer_block"></span>
+                                            </button>
+                                        </div>
+                                        <div id="audio_battle_itog_rating_2" class="itog_rating">
+                                            0
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span style="color: red" id="audio_battle_ocenka_msg"></span><span>&nbsp;</span>
+                                    </div>
+                                </div>
+                                <div style="display: none">
+                                    <span style="font-size: 10px"><span id="audio_battle_judging_procent_block" style="padding: 3px; border: 1px dashed #ccc"></span></span>
+                                </div>
+                            </div>
+                            <div class="pull-right three-side">
+                                <div>
+                                    <div>
+                                        <div class="pull-left">
+                                            <div id="audio_battle_judging_player_2_run" class="right_arrow_wrap" style="display: none"
+                                                 title="Прослушать аудиозапись">
+                                                <div class="prepause pull-left"></div>
+                                                <div class="right_arrow pull-left"></div>
+                                                <div class="fl_cl"></div>
+                                            </div>
+                                        </div>
+                                        <div class="pull-left uchastnik_number">Участник №2</div>
+                                        <div class="fl_cl"></div>
+                                    </div>
+                                    <div style="padding: 2px 10px 2px 5px; border: 1px dashed #517597">
+                                        <div id="audio_battle_rating_stars_2">
+                                        </div>
+                                        <div style="margin-top: 5px">
+                                            <div class="pull-left">
+                                                <label for="audio_battle_judging_comment_2">
+                                                    Комментарий:
+                                                </label>
+                                            </div>
+                                            <div class="fl_cl"></div>
+                                        </div>
+                                        <div style="margin-top: 3px">
+                                            <textarea id="audio_battle_judging_comment_2" placeholder="Комментарий для второго варианта"
+                                                      class="rating_comment"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="checkbox">
+                                                <input id="audio_battle_comment_sign_2" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right">
+                                        <span class="link_view judging_claim" id="audio_battle_claim_2">
+                                            заявить о нарушении
+                                            правил
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fl_cl">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_audio_battle" style="display: none">
+                    <div id="ext_rating_audio">
+                        <div>
+                            <div class="pull-left" style="width: 120px">
+                                <h5>Бой в один раунд</h5>
+                                <div style="background-color: #639; padding: 3px; border: 1px solid #D9E0E7; color: #fff; text-align: center">
+                                    <span class="th_link" onclick="get_otbor_round_table(0,'audio_battle')">оценки </span>
+                                </div>
+                                <div class="tt_block" style="border: 1px solid #D9E0E7; padding: 3px; border-top-width: 0"
+                                     id="audio_battle_winners_1_0">
+                                </div>
+                            </div>
+                            <div class="pull-right" style="width: 610px;">
+                                <div style="padding: 5px 0">
+                                    <span class="link_view" style="padding: 4px; border: 1px #ccc dashed" onclick="audio_battle_number = 1; fill_audio_battle_rating()">1-ый аудиобаттл </span><span class="link_view" style="padding: 4px; border: 1px #ccc dashed"
+                                                                                                                                                                                                     onclick="audio_battle_number = 2; fill_audio_battle_rating()">2-й аудиобаттл</span>
+                                </div>
+                                <div>
+                                    <table class="playoff_tbl" style="width: 610px;">
+                                        <thead>
+                                            <tr>
+                                                <th style="background-color: #639; padding: 3px">
+                                                    1/16<span style="margin-left: 4px"
+                                                              class="th_link" id="audio_battle_grade_1_16"></span>
+                                                </th>
+                                                <th style="background-color: #639; padding: 3px">
+                                                    1/8<span style="margin-left: 4px"
+                                                             class="th_link" id="audio_battle_grade_1_8"></span>
+                                                </th>
+                                                <th style="background-color: #639; padding: 3px">
+                                                    1/4<span style="margin-left: 4px"
+                                                             class="th_link" id="audio_battle_grade_1_4"></span>
+                                                </th>
+                                                <th style="background-color: #639; padding: 3px">
+                                                    1/2<span style="margin-left: 4px"
+                                                             class="th_link" id="audio_battle_grade_1_2"></span>
+                                                </th>
+                                                <th style="background-color: #639; padding: 3px">
+                                                    финал<span style="margin-left: 4px"
+                                                               class="th_link" id="audio_battle_grade_1_1"></span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td rowspan="2">
+                                                    <div class="tt_block" id="audio_battle_winners_1_16">
+                                                    </div>
+                                                </td>
+                                                <td rowspan="2">
+                                                    <div class="tt_block" id="audio_battle_winners_1_8">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="tt_block" id="audio_battle_winners_1_4">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="tt_block" id="audio_battle_winners_1_2">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="tt_block" id="audio_battle_winners_1_1">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <h5>Оценки финала</h5>
+                                <div style="margin-bottom: 10px">
+                                    <table class="playoff_tbl af_table" style="width: 610px" id="audio_battle_final_table">
+                                        <thead>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="fl_cl"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="ext_beat_battle" style="display: none">
+                    <div>
+                        <div class="pull-left left_side">
+                            <div>
+                                <div class="right_arrow_wrap" id="bc_player_play" style="display: none; margin: 4px 0"
+                                     title="Прослушать бит">
+                                    <div class="prepause pull-left"></div>
+                                    <div class="right_arrow pull-left"></div>
+                                    <div class="fl_cl"></div>
+                                </div>
+                            </div>
+                            <div id="bc_comments" class="comment_list comment_list_for_battle" style="display: none">
+                            </div>
+                        </div>
+                        <div class="pull-right right_side">
+                            <div id="beat_battle_voice_block" class="block_style" style="display: none">
+                            </div>
+                            <div id="bc_rating_stars_block" style="display: none">
+                            </div>
+                        </div>
+                        <div class="fl_cl">
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_beat_battle" style="display: none">
+                    <div id="beat_battle_judging_block">
+                        <div style="margin-top: 5px">
+                            <div class="pull-left three-side">
+                                <div>
+                                    <div>
+                                        <div class="pull-left">
+                                            <div id="beat_battle_judging_player_1_run" class="right_arrow_wrap" style="display: none"
+                                                 title="Прослушать аудиозапись">
+                                                <div class="prepause pull-left"></div>
+                                                <div class="right_arrow pull-left"></div>
+                                                <div class="fl_cl"></div>
+                                            </div>
+                                        </div>
+                                        <div class="pull-left uchastnik_number">Участник №1</div>
+                                        <div class="fl_cl"></div>
+                                    </div>
+
+                                    <div style="padding: 2px 10px 2px 5px; border: 1px dashed #517597">
+                                        <div id="beat_battle_rating_stars_1">
+                                        </div>
+                                        <div style="margin-top: 5px">
+                                            <div class="pull-left">
+                                                <label for="beat_battle_judging_comment_1">
+                                                    Комментарий:
+                                                </label>
+                                            </div>
+                                            <div class="fl_cl"></div>
+                                        </div>
+                                        <div style="margin-top: 3px">
+                                            <textarea id="beat_battle_judging_comment_1" placeholder="Комментарий для первого варианта"
+                                                      class="rating_comment"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="checkbox">
+                                                <input id="beat_battle_comment_sign_1" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right">
+                                        <span class="link_view judging_claim" id="beat_battle_claim_1">
+                                            заявить о нарушении правил
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pull-left three-center">
+                                <div>
+                                    <div style="margin-top: 24px" class="clearfix">
+                                        <div id="beat_battle_itog_rating_1" class="itog_rating">
+                                            0
+                                        </div>
+                                        <div style="display: inline-block">
+                                            <button id="beat_battle_send_golos" class="btn" disabled="disabled" style="width: 130px; padding: 4px; margin: 0">
+                                                Оценить <span id="beat_battle_timer_block"></span>
+                                            </button>
+                                        </div>
+                                        <div id="beat_battle_itog_rating_2" class="itog_rating">
+                                            0
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span style="color: red" id="beat_battle_ocenka_msg"></span><span>&nbsp;</span>
+                                    </div>
+                                </div>
+                                <div style="display: none">
+                                    <span style="font-size: 10px"><span id="beat_battle_judging_procent_block" style="padding: 3px; border: 1px dashed #ccc"></span></span>
+                                </div>
+                            </div>
+                            <div class="pull-right three-side">
+                                <div>
+                                    <div>
+                                        <div class="pull-left">
+                                            <div id="beat_battle_judging_player_2_run" class="right_arrow_wrap" style="display: none"
+                                                 title="Прослушать аудиозапись">
+                                                <div class="prepause pull-left"></div>
+                                                <div class="right_arrow pull-left"></div>
+                                                <div class="fl_cl"></div>
+                                            </div>
+                                        </div>
+                                        <div class="pull-left uchastnik_number">Участник №2</div>
+                                        <div class="fl_cl"></div>
+                                    </div>
+                                    <div style="padding: 2px 10px 2px 5px; border: 1px dashed #517597">
+                                        <div id="beat_battle_rating_stars_2">
+                                        </div>
+                                        <div style="margin-top: 5px">
+                                            <div class="pull-left">
+                                                <label for="beat_battle_judging_comment_2">
+                                                    Комментарий:
+                                                </label>
+                                            </div>
+                                            <div class="fl_cl"></div>
+                                        </div>
+                                        <div style="margin-top: 3px">
+                                            <textarea id="beat_battle_judging_comment_2" placeholder="Комментарий для второго варианта"
+                                                      class="rating_comment"></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="checkbox">
+                                                <input id="beat_battle_comment_sign_2" type="checkbox" title="Подписаться под комментарием" />подписаться под комментарием
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right">
+                                        <span class="link_view judging_claim" id="beat_battle_claim_2">
+                                            заявить о нарушении правил
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fl_cl">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ext_beat_battle" style="display: none">
+                    <div>
+                        <div>
+                            <div class="pull-left" style="width: 120px">
+                                <div style="background-color: #939; padding: 3px; border: 1px solid #D9E0E7; color: #fff; text-align: center">
+                                    <span class="th_link" onclick="get_otbor_round_table(0,'beat_battle')">
+                                        оценки раунда
+                                    </span>
+                                </div>
+                                <div style="border: 1px solid #D9E0E7; padding: 3px; border-top-width: 0"
+                                     id="beat_battle_winners_1_0">
+                                </div>
+                            </div>
+                            <div class="pull-right" style="width: 610px">
+                                <div style="background-color: #939; padding: 3px; border: 1px solid #D9E0E7; color: #fff;">
+                                    <div class="pull-left">
+                                        <span style="font-weight: bold">Каталог битмейкеров</span>
+                                    </div>
+                                    <div class="pull-right">
+                                        <span class="th_link" onclick="$('#flow_window').show().focus();$('#flow_header_name').html(this.innerText);$('#flow_content').html($('#beat_catalog_using_rules').html());">условия использования битов</span>
+                                    </div>
+                                    <div class="fl_cl"></div>
+                                </div>
+                                <div id="tournir_beat_catalog" style="border: 1px solid #D9E0E7; border-top-width: 0; padding: 3px;">
+                                </div>
+                            </div>
+                            <div class="fl_cl"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="cabinet" class="clearfix" style="display: none; padding: 10px">
+            <div class="pull-left left_side">
+                <div data-bind="foreach: { data: battleTypeList, as: 'battleTypeItem' }" class="clearfix" style="min-height: 80px">
+                    <div class="pull-left" style="width: 140px; margin: 0 8px">
+                        <div class="header-block-light" style="padding: 4px 2px; border: 1px solid #517597; color: #f1f1f1; background-color: #517597; text-align: center; font-variant: small-caps; width: 100%">
+                            <i data-bind="css: 'icon-white icon-' + iconName"></i>&nbsp;<span data-bind="    text: fullTitle"></span>
+                        </div>
+                        <div data-bind="foreach: ko.utils.arrayFilter($parent.battleSeasonList(), function (item) { return (item.btlType === (battleTypeItem.id + '_battle')); })">
+                            <div class="battle_block" data-bind="click: selectBattleSeason">
+                                <div style="text-align: center; padding: 8px 0 0 0; font-weight: bold; text-shadow: 1px 1px 1px #f1f1f1" data-bind="text: fullBtlName"></div>
+                                <div style="text-align: center; padding: 0 0 8px 0; font-size: 10px; text-shadow: 1px 1px 1px #f1f1f1" data-bind="text: isOneRound === true ? 'бой в один раунд' : ('основной баттл: раунд №' + roundCount)"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="material_container" style="display: none; padding-top: 8px;"></div>
+                <div id="btl_list_sub" style="margin-top: 8px;">
+                    <!--<div style="margin: 20px 0 0 0; display: none" id="track_recipe">
+                            <div style="padding: 2px">
+                                <marquee behavior="slide" scrollamount="3" style="line-height: 110%">
+                                     <span onclick="show_marquee_dialog()" class="link_view" style="color:#b4cbfb">разместить объявление в бегущей строке</span>
+
+                                 </marquee>
+                            </div>
+                        </div>-->
+                    <div class="header-block-light">
+                        <div class="pull-left" style="padding: 10px; cursor: pointer;" onclick="vk_window_change('vk_group_news');"><span style="border-bottom: 1px dashed #2B587A; color: #2B587A">Новости</span></div>
+                        <div class="pull-right" style="padding: 10px; cursor: pointer;" onclick="vk_window_change('vk_battle_chat')"><span style="border-bottom: 1px dashed #2B587A; color: #2B587A">Вопросы, предложения</span></div>
+                        <div class="fl_cl"></div>
+                    </div>
+                    <div>
+                        <div id="vk_group_news"></div>
+                        <div id="vk_battle_chat" style="display: none"></div>
+                        <div id="beat_main_catalog" style="display: none"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pull-right right_side">
+                <div>
+                    <div class="header-block-light">
+                        <div style="padding: 8px; text-align: center; font-variant: small-caps">
+                            Мои документы
+                        </div>
+                    </div>
+                    <div class="materials_headers pull-left" onclick="zx.get_materials('audio')">
+                        <div class="materials_headers_title">
+                            <span>Треки</span>
+                        </div>
+                        <div class="not_open_counter">
+                            <span id="not_open_counter_audio">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="materials_headers pull-left" style="margin-left: 3px;" onclick="zx.get_materials('text')">
+                        <div class="materials_headers_title"><span>Тексты</span></div>
+                        <div class="not_open_counter">
+                            <span id="not_open_counter_text">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="materials_headers pull-left" style="margin-left: 3px;" onclick="zx.get_materials('beat')">
+                        <div class="materials_headers_title"><span>Биты</span></div>
+                        <div class="not_open_counter">
+                            <span id="not_open_counter_beat">&nbsp;</span>
+                        </div>
+                    </div>
+                    <div class="fl_cl"></div>
+                </div>
+                <div class="lk_materials" id="lk_materials">
+
+                    <!-- ko if: listWinnerMaterial().length > 0 -->
+                    <div style="text-align: center; margin-top: 16px;">
+                        <div class="header-block-light">
+                            <div style="padding: 8px; text-align: center">
+                                <span style="font-variant: small-caps">Аудиобаттл топ:</span>
+                                <br />
+                                <small>предыдущий раунд</small>
+                            </div>
+                        </div>
+                        <div style="border: 1px solid #dae1e8; text-align: left;">
+                            <div data-bind="foreach: listWinnerMaterial">
+                                <div style="padding: 4px">
+                                    <!-- ko if: $data.userProfile().userName -->
+                                    <a target="_blank" data-bind="attr: { 'href': ('https://vk.com/id' + $data.userProfile().userName.substr(1)) }">
+                                        <img src="#" width="50" alt="" data-bind="    attr: { src: $data.userProfile().photo() }" />
+                                    </a>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: $data.userProfile().userName -->
+                                    <img src="#" width="50" alt="" data-bind="    attr: { src: $data.userProfile().photo() }" />
+                                    <!-- /ko -->
+                                    <button style="margin-left: 8px;" type="button" data-bind="click: playMaterial" class="btn btn-mini"><i class="icon-play"></i></button>
+                                    <strong style="margin-left: 4px;" data-bind="    text: ($data.userProfile().nickName() || '???')"></strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div>
+            </div>
+        </div>
+        <div id="bottom_nav">
+            <span>Баттл "Естественный" &copy; 2011-2013</span><span class="link_view" onclick="show_out_window('copyright_rules.html')">
+                Политика конфиденциальности
+            </span><a href="https://vk.com/battle_com_ru" target="_blank">
+                Официальная группа баттла
+            </a>
+        </div>
+        <div style="margin: auto; width: 170px; margin-top: 8px;">
+            <div>
+                <div class="bottom_str pull-left" style="margin-left: 0">
+                    <span id="friends_invite_link">Пригласить друзей</span>
+                </div>
+                <div class="pull-left" style="margin: 0 12px 0 2px; width: 30px">
+                    <div class="counter_view" title="количество приглашённых пользователей" id="referrer_wrap">
+                        <div class="left_arrow"></div>
+                        <span id="referrer_users">&nbsp;</span>
+                    </div>
+                </div>
+                <div class="fl_cl"></div>
+            </div>
+            <div style="margin-top: 4px;">
+                <div id="vk_like">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="display: none" id="beat_catalog_using_rules">
+        <h4>Использование, покупка битов</h4>
+        <p>
+            Можно использовать любой бит в каталоге для необходимых Вам целей со следующими
+            ограничениями:
+        </p>
+        <ul class="listing">
+            <li>
+                указывать авторство (production) битмейкера, дабы не нарушать авторские
+                права
+            </li>
+            <li>оставлять голосовые метки, созданные битмейкером</li>
+        </ul>
+        <p>
+            Если в названии аудиозаписи указана цена, Вы можете обратиться к битмейкеру
+            и купить
+            данный бит. Если ссылка на битмейкера не указана, можно связаться с ним,
+            оставив
+            заявку в <a target="_blank" href="https://vk.com/club33368159">группе каталога</a>
+            .
+        </p>
+        <h4>Размещение, добавление в каталог</h4>
+        <p>
+            Для размещения в каталоге необходимо предварительно добавить свои минуса
+            в аудиозаписи
+            группы <a target="_blank" href="https://vk.com/club33368159">
+                https://vk.com/club33368159
+            </a>в формате:
+        </p>
+        <p style="text-align: center">
+            <i>
+                Битмейкер - Название минуса [теги с описанием минуса, через точку с запятой]
+                [цена]
+            </i>
+        </p>
+        <p style="font-size: 10px">
+            , где теги - это всё, что угодно, относящееся к минусу: жанр, год создания,
+            битрейт
+            и т.п.<br />
+            * если предоставляете минус в бесплатное пользование, вместо цены необходимо
+            указать
+            [free]
+        </p>
+        <br />
+        <p>
+            Битмейкеры, разместившие более 10 качественных минусов, после модерации
+            заносятся
+            в каталог минусов<br />
+            Минуса с очень плохим качеством, либо нарушающие чьи-либо авторские права
+            могут
+            быть удалены администрацией без каких-либо объяснений, а разместивший их
+            пользователь
+            может быть занесён в чёрный список.
+        </p>
+        <br />
+        <br />
+        <p>
+            Если у Вас уже есть свой каталог битов (в виде группы) - нет необходимости
+            вручную
+            копировать каждый бит. Для импортирования Вашего каталога в данный каталог
+            свяжитесь
+            с администратором приложения.
+        </p>
+    </div>
+</body>
+</html>

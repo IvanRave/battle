@@ -2,10 +2,6 @@ var chatHubClient;
 
 var battleplayer;
 
-function getBattleApiUrlBase(urlPartList) {
-    return "https://battle-api.azurewebsites.net/" + urlPartList.join('/');
-}
-
 if (!Array.indexOf) {
     Array.prototype.indexOf = function (obj) {
         for (var i = 0, max_i = this.length; i < max_i; i++) {
@@ -39,6 +35,10 @@ function get_date_from_json(in_data, no_need_time) {
 ////    if (!no_need_time) { dt = dt + ' ' + now.toLocaleTimeString(); }
 ////    return dt;
 ////}
+
+// function getBattleApiUrlBase(urlPartList) {
+    // return '{{conf.reqUrl}}/' + urlPartList.join('/');
+// }
 
 function fromOAtoJS(dateFloat) {
     var jsDate = new Date();
@@ -105,9 +105,9 @@ function ajaxRequest(mthd, jd, options) { // Ajax helper
         ajaxOptions.contentType = "application/json;charset=utf-8";
     }
 
-    return $.ajax(requestUrl, ajaxOptions).always(function () {
+    return $.ajax('{{conf.reqUrl}}' + requestUrl, ajaxOptions).always(function () {
         if (options.progress) {
-            $(".spinner").hide();
+            $('.spinner').hide();
         }
     });
 
@@ -349,10 +349,13 @@ function auth(login_options) {
     $.ajax({
         cache: false,
         async: true,
-        type: "POST",
-        dataType: "json",
+        type: 'POST',
+        dataType: 'json',
+        xhrFields: {
+             withCredentials: true
+        },
         //url: "/wservice/login.svc/userlogin",
-        url: "/api/userprofile/",
+        url: "{{conf.reqUrl}}/api/userprofile/",
         data: JSON.stringify(login_data_json),
         contentType: "application/json;charset=utf-8"
     })
@@ -384,7 +387,7 @@ function set_after_auth() {
     $("#my_docs_block").show();
     show_cabinet();
     update_balance_string();
-    zx.get_referrer_users();
+    setTimeout(zx.get_referrer_users, 30000);
 }
 
 function get_track_from_wall() {
@@ -2944,9 +2947,11 @@ var zx = {
         });
     },
     get_referrer_users: function () {
-        ajaxRequest("get_referrer_users", {},
-            {}
-        ).done(function (r) {
+        $.ajax('{{conf.reqSecondUrl}}/referrer-users', {
+           xhrFields: {
+             withCredentials: true
+           }
+        }).done(function (r) {
             if (r) {
                 $("#referrer_users").html(r.length);
             }

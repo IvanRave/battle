@@ -4,7 +4,7 @@ window.btlApp.datacontext = (function () {
     // Private
     function clearErrorMessage(entity) { entity.errorMessage(null); }
 
-    var battleApiUrl = "https://battle-api.azurewebsites.net/";
+    var battleApiUrl = '{{conf.reqSecondUrl}}/';
 
     function ajaxRequest(type, url, data, dataType) { // Ajax helper
         $('.spinner').show();
@@ -24,7 +24,10 @@ window.btlApp.datacontext = (function () {
             ////contentType: "application/json",
             cache: false,
             type: type,
-            data: stringifyData
+            data: stringifyData,
+            xhrFields: {
+             withCredentials: true
+            }
         };
 
         return $.ajax(url, options).always(function () {
@@ -33,15 +36,15 @@ window.btlApp.datacontext = (function () {
     }
 
     // routes (uqp = url query parameters)
-    function userProfileUrl() { return "/api/userprofile/"; }
-    function bankOperationUrl() { return "/api/bankoperation/"; }
-    function roundMaterialUrl(uqp) { return "/api/roundmaterial/" + (uqp ? ("?" + $.param(uqp)) : ""); }
-    function materialUrl(uqp) { return "/api/material/" + (uqp ? ("?" + $.param(uqp)) : ""); }
-    function boutUnitUrl(uqp) { return "/api/boutunit/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function userProfileUrl() { return "{{conf.reqUrl}}/api/userprofile/"; }
+    function bankOperationUrl() { return "{{conf.reqUrl}}/api/bankoperation/"; }
+    function roundMaterialUrl(uqp) { return "{{conf.reqUrl}}/api/roundmaterial/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function materialUrl(uqp) { return "{{conf.reqUrl}}/api/material/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function boutUnitUrl(uqp) { return "{{conf.reqUrl}}/api/boutunit/" + (uqp ? ("?" + $.param(uqp)) : ""); }
     function aboutUrl() { return "about.html"; }
     function theoryUrl() { return "napisanie_tekstov.html"; }
 
-    function serviceUrl(methodName) { return "wservice/wcfbase.svc/" + methodName; }
+    function serviceUrl(methodName) { return "{{conf.reqUrl}}/wservice/wcfbase.svc/" + methodName; }
 
     // BattleType
     function getBattleTypeList() {

@@ -1,0 +1,19 @@
+{
+  "name": "battle",
+  "version": "0.1.0",
+  "author": {
+    "name": "IvanRave"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanRave/battle.git"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-jshint": "~0.6.5",
+    "grunt-gh-pages": "~0.8.1",
+    "grunt-contrib-copy": "~0.4.1"
+  }
+}

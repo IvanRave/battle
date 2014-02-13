@@ -77,7 +77,8 @@ function simple_tooltip(target_items, name) {
 // Request to server
 function ajaxRequest(mthd, jd, options) { // Ajax helper
     if (!options) { options = {}; }
-    // options = {cache, shared, progress }
+    // options = {cache, progress }
+    // options.shared has been removed (all methods moved to web api)
 
     if (options.progress) {
         $('.spinner').show();
@@ -95,8 +96,7 @@ function ajaxRequest(mthd, jd, options) { // Ajax helper
         requestUrl = mthd;
     }
     else {
-        requestUrl = (options.shared) ? "/wservice/shared.svc" : "/wservice/wcfbase.svc";
-        requestUrl += '/' + mthd;
+        requestUrl = "/wservice/wcfbase.svc/" + mthd;
         // set contentType for WCF services
         ajaxOptions.contentType = "application/json;charset=utf-8";
     }
@@ -106,29 +106,6 @@ function ajaxRequest(mthd, jd, options) { // Ajax helper
             $('.spinner').hide();
         }
     });
-
-    ////    .fail(function (e) {
-    ////    ////sys_msg_show();
-    ////    ////if (e && e.responseText) {
-    ////    ////    if (e.status === 401) {
-    ////    ////        if (options.shared) {
-    ////    ////            sys_msg_show();
-    ////    ////        }
-    ////    ////        else {
-    ////    ////            auth({
-    ////    ////                login_on_done: function () {
-    ////    ////                    ajaxRequest(mthd, jd, options);
-    ////    ////                }
-    ////    ////            });
-    ////    ////        }
-    ////    ////    }
-    ////    ////}
-    ////    ////if (mthd !== "send_error_to_server") {
-    ////    ////    sys_msg_show();
-    ////    ////    var er_text = "method: " + mthd + "; responseText: " + e.responseText; // + "; status: " + e.status + "; statusText: " + e.statusText + "; readyState: " + e.readyState;
-    ////    ////    ajaxRequest("send_error_to_server", { e_response_text: encodeURI(er_text) }, { shared: 1 });
-    ////    ////}
-    ////})
 }
 
 var battle_types = {
@@ -798,14 +775,19 @@ function get_price_from_title(t) {
 }
 
 function play_file_jquery(audata, author_link, material_id) {
-    VK.api("audio.get", audata, function (r) {
+    VK.api('audio.get', audata, function (r) {
         if (!r.response || r.response.length === 0) {
             event_msg_show('Трек был удалён либо закрыты права на доступ');
-            ajaxRequest("send_error_to_server", {
-                e_response_text: "ошибка при доступе к аудиозаписи: " + JSON.stringify(audata)
-            }, {
-                shared: 1
+            
+            $.ajax('{{conf.reqUrl}}/api/log-record', {
+              type: 'POST',
+              contentType: 'application/json;charset=utf-8',
+              data: JSON.stringify({
+                LogSubject: 'AudioError',
+                LogBody: 'Ошибка при доступе к аудиозаписи: ' + JSON.stringify(audata)
+              })
             });
+            
             return;
         }
         bj_play(material_id, { aid: r.response[0].aid, oid: r.response[0].owner_id }, r.response[0].url, null, r.response[0].artist, r.response[0].title, author_link, r.response[0].lyrics_id);
@@ -1971,16 +1953,10 @@ function fill_rating_table(rd, battle_type, out_block) {
 
 
 function get_rating(round_id, battle_type, out_block) {
-    ajaxRequest("get_rating",
-        {
-            round_id: round_id
-        },
-        {
-            progress: 1,
-            cache: 1,
-            shared: 1
-        }
-    ).done(function (r) {
+    $.ajax('{{conf.reqUrl}}/api/round/'+round_id + '/rating', {
+      type: 'GET',
+      cache: false
+    }).done(function (r) {
         if (r) {
             //$('#out_header_name').html('Турнирная таблица');
             //var inner_div = document.createElement("div");
@@ -2361,12 +2337,14 @@ function get_star_rating_string(battle_type, block_number, json_array_div) {
 }
 
 function add_comment_to_material(comment_text, material_id, comment_sign, comments_div, reply_textarea, battle_type) {
-    ajaxRequest("add_comment_to_material", {
+    $.ajax('{{conf.reqUrl}}/api/material/' + material_id + '/comment', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      data: JSON.stringify({
         comment_text: encodeURIComponent(comment_text),
         material_id: material_id,
         comment_sign: comment_sign
-    }, {
-        shared: 1
+      })
     }).done(function () {
         add_comments_to_block(material_id, comments_div, battle_type, true, null);
         $(reply_textarea).val('');
@@ -2374,19 +2352,17 @@ function add_comment_to_material(comment_text, material_id, comment_sign, commen
 }
 
 function get_otbor_round_table(round_chislo, battle_type, battle_number) {
-    ajaxRequest("get_round_result",
-        {
-            round_chislo: round_chislo,
-            is_show_only_wins: false,
-            battle_type: battle_type,
-            battle_number: battle_number
-        },
-        {
-            progress: 1,
-            cache: 1,
-            shared: 1
-        }
-    ).done(function (r) {
+    $.ajax('{{conf.reqUrl}}/api/round-result', {
+      type: 'GET',
+      // Url params
+      data: {
+        round_chislo: round_chislo,
+        is_show_only_wins: false,
+        battle_type: battle_type,
+        battle_number: battle_number
+      },
+      cache: true
+    }).done(function (r) {
         if (r) {
             $('#out_header_name').html('Турнирная таблица');
             var inner_div = document.createElement("div");
@@ -2463,18 +2439,17 @@ function fill_rating_table_top(rd, battle_type, out_block) {
 
 
 function get_round_result(round_chislo, battle_type, battle_number) {
-    ajaxRequest("get_round_result",
-        {
-            round_chislo: round_chislo,
-            is_show_only_wins: false,
-            battle_type: battle_type,
-            battle_number: battle_number
-        },
-        {
-            cache: 1,
-            shared: 1
-        }
-    ).done(function (r) {
+    $.ajax('{{conf.reqUrl}}/api/round-result', {
+      type: 'GET',
+      // Url params
+      data: {
+        round_chislo: round_chislo,
+        is_show_only_wins: false,
+        battle_type: battle_type,
+        battle_number: battle_number
+      },
+      cache: true
+    }).done(function (r) {
         ////if (r && r.length > 0) {
         if (battle_type == "text_battle" && round_chislo == 1) {
             for (var w_key = 0; w_key <= 1; w_key++) {
@@ -3090,12 +3065,14 @@ var dbt = {
 
         var dopinfo_send_button = document.createElement("button");
 
-        $(dopinfo_send_button).prop("type", "button").addClass("btn btn-primary").on("click", function () {
-
-            ajaxRequest("send_error_to_server", {
-                e_response_text: "Заявка на подтверждение баттла : " + battle_id + ". Info: " + $(dopinfo).val()
-            }, {
-                shared: 1
+        $(dopinfo_send_button).prop("type", "button").addClass("btn btn-primary").on('click', function () {
+            $.ajax('{{conf.reqUrl}}/api/log-record', {
+              type: 'POST',
+              contentType: 'application/json;charset=utf-8',
+              data: JSON.stringify({
+                LogSubject: 'BattleAdding',
+                LogBody: "Заявка на подтверждение баттла : " + battle_id + ". Info: " + $(dopinfo).val()
+              })
             }).done(function () {
                 out_window_hide();
                 popup_msg("Заявка на изменение баттла", "Успешно отправлено.");
@@ -3194,10 +3171,13 @@ var dbt = {
                 battle_link: $(battle_link_input).val()
             };
 
-            ajaxRequest("send_error_to_server", {
-                e_response_text: "Заявка на добавление баттла: " + JSON.stringify(adding_battle_info)
-            }, {
-                shared: 1
+            $.ajax('{{conf.reqUrl}}/api/log-record', {
+              type: 'POST',
+              contentType: 'application/json;charset=utf-8',
+              data: JSON.stringify({
+                LogSubject: 'BattleAdding',
+                LogBody: "Заявка на добавление баттла: " + JSON.stringify(adding_battle_info)
+              })
             }).done(function () {
                 popup_msg("Заявка на добавление баттла", "Успешно отправлено. Вы можете проверить статус заявки через 24 часа.");
             });
@@ -3218,32 +3198,3 @@ var dbt = {
 
     }
 };
-
-
-function get_info_mts_bonus() {
-    var bonus_div = document.createElement("div");
-    $(bonus_div).append(
-        '<img src="/Images/mtsbonus.png"/>',
-        '<h5>а также:</h5>',
-        '<img src="/Images/mtsbonusadd.png"/>',
-        '<div>*подробнее на официальном сайте МТС</div>'
-        );
-    popup_msg("МТС-бонус", bonus_div);
-}
-
-
-function show_top() {
-    var inner_div = document.createElement("div");
-    popup_msg("Топ", inner_div);
-
-    get_top_rating();
-}
-
-function get_top_rating() {
-    ajaxRequest("get_top_rating", {}, {
-        shared: 1,
-        cache: 1,
-        progress: 1
-    }).done(function (r) {
-    });
-}

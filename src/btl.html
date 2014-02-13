@@ -24,11 +24,11 @@
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
     <script src="scripts/jquery.rateit.min.js"></script>
     <script src="scripts/knockout-2.3.0.js"></script>
-    <script src="js/base.js?1"></script>
-    <script src="js/vk_main.js?1"></script>
-    <script src="js/btl.datacontext.js?1"></script>
-    <script src="js/btl.model.js?1"></script>
-    <script src="js/btl.viewmodel.js?1"></script>
+    <script src="js/base.js?2"></script>
+    <script src="js/vk_main.js?2"></script>
+    <script src="js/btl.datacontext.js?2"></script>
+    <script src="js/btl.model.js?2"></script>
+    <script src="js/btl.viewmodel.js?2"></script>
     <script src="scripts/mediaelementjs/mediaelement-and-player.min.js"></script>
 </head>
 <body>
@@ -85,7 +85,6 @@
                 <span data-bind="if: nickName()" class="link_view" onclick="show_settings()"><span data-bind="    text: nickName()"></span><span style="margin-left: 8px" data-bind="    text: beatmakerName()"></span></span>
             </div>
             <div class="pull-right">
-                <!--<span class="link_view" style="display: none" onclick="show_top()">Топ</span>-->
                 <span class="link_view" onclick="show_settings()">Настройки баттла</span>
                 <span class="divider">|</span>
                 <span class="link_view" data-bind="click: showBalanceModal"><span>У Вас </span><span data-bind="    text: balance() + plural_number(balance(), ' монет', '', 'ы', '')"></span></span>

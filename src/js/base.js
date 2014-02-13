@@ -36,10 +36,6 @@ function get_date_from_json(in_data, no_need_time) {
 ////    return dt;
 ////}
 
-// function getBattleApiUrlBase(urlPartList) {
-    // return '{{conf.reqUrl}}/' + urlPartList.join('/');
-// }
-
 function fromOAtoJS(dateFloat) {
     var jsDate = new Date();
     jsDate.setTime((parseFloat(dateFloat) - 25569) * 24 * 3600 * 1000);
@@ -99,7 +95,7 @@ function ajaxRequest(mthd, jd, options) { // Ajax helper
         requestUrl = mthd;
     }
     else {
-        requestUrl = (options.shared) ? "wservice/shared.svc" : "wservice/wcfbase.svc";
+        requestUrl = (options.shared) ? "/wservice/shared.svc" : "/wservice/wcfbase.svc";
         requestUrl += '/' + mthd;
         // set contentType for WCF services
         ajaxOptions.contentType = "application/json;charset=utf-8";
@@ -415,7 +411,7 @@ function get_track_from_wall() {
                 mcontent_json.gid = -parseInt(r.response[1].attachment.audio.owner_id, 10);
             }
 
-            play_file_jquery(mcontent_json, "https://vk.com/club31568224", null);
+            play_file_jquery(mcontent_json, "//vk.com/club31568224", null);
         });
     });
 }
@@ -491,7 +487,7 @@ function load_rkl_blocks() {
     $("#rkl_div").css({ "text-align": "center", "border": "1px solid #DAE1E8" }).html(
         $('<div></div>').addClass('header-block-light').css({ 'padding': '8px' }).html('Партнёры'));
     for (var rkl in rkl_blocks) {
-        var away_link_to = encodeURIComponent('https://vk.com/club' + rkl_blocks[rkl].gid);
+        var away_link_to = encodeURIComponent('//vk.com/club' + rkl_blocks[rkl].gid);
         var need_div = document.createElement("div");
         $(need_div).css({ "display": "inline-block", "margin": "8px" }).html(
             $('<a></a>').attr({ "href": 'away.ashx?to=' + away_link_to, "target": "blank" }).html(
@@ -569,8 +565,8 @@ function set_drag() {
 
 var beat_group_names = {
     33368159: [],
-    32952439: ["https://vkontakte.ru/instrumental_s|"],
-    27914325: ["РЭП МИНУС ОТ МЕГО ГРУППЫ https://vk.com/rep.minusa.club"],
+    32952439: ["http://vkontakte.ru/instrumental_s|"],
+    27914325: ["РЭП МИНУС ОТ МЕГО ГРУППЫ http://vk.com/rep.minusa.club"],
     14537087: ["Бесплатный минус от команды FREETEAM [club14537087]", "Бесплатный минус от команды FREETEAM [vk.com/freeteam]"],
     9476578: ["[club9476578]", "www.klas-rap.com.ua"]
 };
@@ -636,7 +632,7 @@ function fill_div_beatmaker(inner_div_id) {
         var beat_li = document.createElement('li');
         beat_li.appendChild(document.createTextNode(beat_catalog_beatmaker_short[bc].name));
         $(beat_li).on('click', { gid: bc, gname: beat_catalog_beatmaker_short[bc].name, album_id: beat_catalog_beatmaker_short[bc].album_id }, function (event) {
-            get_audio_from_album(event.data.gid, event.data.album_id, event.data.gname, 'https://vk.com/club' + event.data.gid);
+            get_audio_from_album(event.data.gid, event.data.album_id, event.data.gname, '//vk.com/club' + event.data.gid);
         });
         $(inner_div).append(beat_li);
     }
@@ -678,7 +674,7 @@ function bj_fill_beatmakers_list(title) { //get title and url from title
     if (last_right_skoba > 0 && last_left_skoba > 0 && last_right_skoba === (title.length - 1)) {
         beatmaker_url = title.substring(last_left_skoba + 1, last_right_skoba).toLowerCase();
         if (beatmaker_url !== '') {
-            var url_patt = /https:\/\/vk.com\//g;
+            var url_patt = /\/\/vk.com\//g;
             var url_check_result = url_patt.test(beatmaker_url);
             if (!url_check_result) { beatmaker_url = ''; }
         }
@@ -697,7 +693,7 @@ function get_audio_from_album(gid, album_id, album_title, album_url) {
         }
 
         var oc = $('#flow_content');
-        $('#flow_header_name').html('<span>' + album_title + '</span><a style="display:inline-block; margin-left:5px" class="img_link_user" href="https://vk.com/club' + gid + '" target="_blank"></a>');
+        $('#flow_header_name').html('<span>' + album_title + '</span><a style="display:inline-block; margin-left:5px" class="img_link_user" href="//vk.com/club' + gid + '" target="_blank"></a>');
         $('#flow_window').show().focus();
         $('#flow_content').append('<div id="beat_catalog_beat_list"></div>');
         var pl_list = { playlist: [] };
@@ -818,11 +814,11 @@ function play_file_jquery(audata, author_link, material_id) {
 
 function show_judge_info(uid, gid, album_id, nickname, u_description) {
     $('#out_header_name').html(nickname);
-    $('#out_content').html('<div><div style="float:left"><h5>' + nickname + '</h5></div><div style="float:left; width:12px; position:relative">&nbsp;<a style="position:absolute; top:5px" class="img_link_user" href="https://vk.com/id' + uid + '" target="_blank">&nbsp;</a></div><div style="float:left; padding:10px;">' + u_description + '</div><div style="clear:both"></div></div>');
+    $('#out_content').html('<div><div style="float:left"><h5>' + nickname + '</h5></div><div style="float:left; width:12px; position:relative">&nbsp;<a style="position:absolute; top:5px" class="img_link_user" href="//vk.com/id' + uid + '" target="_blank">&nbsp;</a></div><div style="float:left; padding:10px;">' + u_description + '</div><div style="clear:both"></div></div>');
     $('#out_window').show().focus();
     VK.api("audio.get", { uid: uid, gid: gid, album_id: album_id }, function (r) {
         for (var rkey = 0, max_rkey = r.response.length; rkey < max_rkey; rkey++) {
-            bj_table_add_record(r.response[rkey].aid, r.response[rkey].owner_id, r.response[rkey].artist, r.response[rkey].title, r.response[rkey].url, r.response[rkey].duration, "https://vk.com/id" + uid, "out_content");
+            bj_table_add_record(r.response[rkey].aid, r.response[rkey].owner_id, r.response[rkey].artist, r.response[rkey].title, r.response[rkey].url, r.response[rkey].duration, "//vk.com/id" + uid, "out_content");
         }
     });
 }
@@ -842,7 +838,7 @@ function send_track_to_battle(battle_type, my_aid, my_oid, my_title) {
     VK.api("audio.add", { aid: my_aid, gid: battle_types[battle_type].battle_group_id, oid: my_oid }, function (res_new_track) {
         if (res_new_track.error) {
             if (res_new_track.error.error_code === 201) {
-                event_msg_show('Для участия необходимо вступить в группу: <a href="https://vk.com/club' + battle_types[battle_type].battle_group_id + '" target="_blank">vk.com/club' + battle_types[battle_type].battle_group_id + '</a>');
+                event_msg_show('Для участия необходимо вступить в группу: <a href="//vk.com/club' + battle_types[battle_type].battle_group_id + '" target="_blank">vk.com/club' + battle_types[battle_type].battle_group_id + '</a>');
             }
             else {
                 sys_msg_show();
@@ -1735,7 +1731,7 @@ function open_bout_unit(bout_unit_id, rtrn_values) {
 ////    ////    requestType: "GET",
 ////    ////    progress: 1
 
-////    var openUrl = getBattleApiUrlBase(["bout-unit", bout_unit_id, "open"]);
+////    var openUrl = ...
 ////    $.ajax(openUrl, {
 ////        type: "GET",
 ////        cache: false
@@ -2795,7 +2791,7 @@ function get_main_track() {
             else {
                 mcontent_json.uid = mcontent_array[0];
             };
-            play_file_jquery(mcontent_json, "https://vk.com/id" + r.uid, r.material_id);
+            play_file_jquery(mcontent_json, "//vk.com/id" + r.uid, r.material_id);
             ajaxRequest("add_material_view", { material_id: r.material_id }, {});
         });
     });
@@ -2947,7 +2943,7 @@ var zx = {
         });
     },
     get_referrer_users: function () {
-        $.ajax('{{conf.reqSecondUrl}}/referrer-users', {
+        $.ajax('{{conf.reqUrl}}/api/referrer-users', {
            xhrFields: {
              withCredentials: true
            }
@@ -2968,7 +2964,7 @@ var zx = {
                 }
                 for (var ilink = 0; ilink < user_count; ilink++) {
                     var a_link = document.createElement("a");
-                    var str_link = "https://vk.com/id" + event.data.user_arr[ilink];
+                    var str_link = "//vk.com/id" + event.data.user_arr[ilink];
                     $(a_link).attr({ "href": str_link, "target": "_blank" }).html(str_link);
                     var div_link = document.createElement("div");
                     div_link.appendChild(a_link);
@@ -3034,7 +3030,7 @@ function show_marquee_dialog() {
         $(beg_link_input).attr({
             "type": "text",
             "maxlength": "140"
-        }).css({ "width": "100%" }).val("https://vk.com/");
+        }).css({ "width": "100%" }).val("//vk.com/");
 
         $(inner_div).append($('<div></div>').html(beg_link_input));
         $(inner_div).append('<div style="text-size:10px">*только внутренняя ссылка ВКонтакте</div>');
@@ -3175,7 +3171,7 @@ var dbt = {
             "type": "text"
         }).css({
             "width": "90%"
-        }).val("https://vk.com/");
+        }).val("//vk.com/");
 
         $(inner_div).append(
             '<h5>Ссылка на баттл:</h5>',

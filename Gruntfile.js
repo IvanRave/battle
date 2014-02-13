@@ -4,8 +4,7 @@ module.exports = function(grunt) {
 
   var isProd = grunt.option('prod') ? true : false;
 
-  var reqUrl = isProd ? 'https://battle.azurewebsites.net' : 'http://localhost:49385',
-      reqSecondUrl = isProd ? 'https://battle-api.azurewebsites.net' : 'http://localhost:28179';
+  var reqUrl = isProd ? '//battle.azurewebsites.net' : '//localhost:49385';
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -65,7 +64,6 @@ module.exports = function(grunt) {
               // if empty - the same domain (simple requests)
               // Example {{requrl}}/api/values
               reqUrl: reqUrl,
-              reqSecondUrl: reqSecondUrl,
               isProd: isProd
           }
       },

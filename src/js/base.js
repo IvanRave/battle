@@ -1205,9 +1205,19 @@ function fill_audio_battle_rating() {
 
 function set_is_page_show(is_page_show) {
     if (is_page_show !== null) {
-        ajaxRequest("set_is_page_show", { is_page_show: is_page_show }, {}).done(function () {
-            $('#save_nick_msg').css('color', 'green').html('Ссылка на Вашу страницу ' + (is_page_show ? '' : 'не') + ' отображается в турнирной таблице').show().delay(2000).fadeOut('fast');
-        });
+      // ajaxRequest("set_is_page_show", { is_page_show: is_page_show }, {})
+      $.ajax('{{conf.reqUrl}}/api/user-info', {
+        type: 'POST',
+        xhrFields: {
+          withCredentials: true
+        },
+        contentType: 'application/json;charset=utf-8',
+        data: JSON.stringify({
+          IsPageShow: is_page_show
+        })
+      }).done(function () {
+         $('#save_nick_msg').css('color', 'green').html('Ссылка на Вашу страницу ' + (is_page_show ? '' : 'не') + ' отображается в турнирной таблице').show().delay(2000).fadeOut('fast');
+      });
     }
 }
 
@@ -1485,12 +1495,13 @@ function generate_judging_texts(bt, is_alternative) {
     $('#' + bt + '_itog_rating_2').html(0).css('background-color', '#5E80A5');
     $('#' + bt + '_ocenka_msg').empty();
 
-    ajaxRequest('/api/material?round_id=' + btl_event.current_round_id + '&is_alternative=' + is_alternative,
-        {},
-        {
-            requestType: 'GET',
-            progress: 1
-        }).done(function (r) {
+    $.ajax('{{conf.reqUrl}}/api/material?round_id=' + btl_event.current_round_id + '&is_alternative=' + is_alternative, {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
             if (r.length < 2) {
                 event_msg_show('Недостаточно произведений для оценивания');
                 return;
@@ -1567,11 +1578,15 @@ function send_claim(flow_id) {
     for (var key = 0, max_key = claim_punkt.length; key < max_key; key++) {
         var claim_type_div = document.createElement('div');
         $(claim_type_div).addClass("radiobtn").on("click", { claim: claim_punkt[key], flow_id: flow_id }, function (event) {
-            ajaxRequest("send_claim",
-                {
-                    claim: event.data.claim,
-                    flow_id: event.data.flow_id
-                }, {});
+            $.ajax('{{conf.reqUrl}}/api/log-record', {
+              type: 'POST',
+              contentType: 'application/json;charset=utf-8',
+              data: JSON.stringify({
+                LogSubject: 'MaterialClaim',
+                LogBody: 'Claim: ' + event.data.claim + '; Material: ' + event.data.flow_id
+              })
+            });
+           
             out_window_hide();
         });
         claim_type_div.appendChild(document.createElement('div'));
@@ -1632,38 +1647,36 @@ function send_text_to_battle() {
 }
 
 function get_rival_flow(comment_id, battle_type) {
-    ajaxRequest("get_rival_flow", {
-        bout_unit_id: comment_id
-    }, {
-        cache: 1,
-        progress: 1
+    $.ajax('{{conf.reqUrl}}/api/bout-unit/' + comment_id + '/material-content/rival', {
+      type: 'GET',
+      xhrFields: {
+          withCredentials: true
+      },
+      cache: true
     }).done(function (r) {
-        if (r) {
-            var oc = $("#flow_content");
-            oc.empty();
-            if (battle_type === "text_battle") {
-                oc.html('<p>' + r + '</p>');
-            }
-            else {
-                var outer_player_div = document.createElement('div');
-                $(outer_player_div).css({ 'border': '1px solid #E7EAED', 'padding': '4px' });
-                var player_div = document.createElement('div');
-                $(player_div).addClass('right_arrow_wrap').attr('title', 'Прослушать аудиозапись');
-                var inner_player_div = document.createElement('div');
-                $(inner_player_div).addClass('right_arrow');
-                player_div.appendChild(inner_player_div);
-                outer_player_div.appendChild(player_div);
-                $(player_div).on('click', function () {
-                    play_file_jquery({ gid: battle_types[battle_type].battle_group_id, aids: r }, null, null);
-                });
-                oc.html(outer_player_div);
-            }
-            $('#flow_header_name').html("Соперник");
-            $('#flow_window').show().focus();
+        var oc = $("#flow_content");
+        oc.empty();
+        if (battle_type === "text_battle") {
+            oc.html('<p>' + r + '</p>');
         }
         else {
-            event_msg_show("Соперник снят с участия за нарушение правил баттла");
+            var outer_player_div = document.createElement('div');
+            $(outer_player_div).css({ 'border': '1px solid #E7EAED', 'padding': '4px' });
+            var player_div = document.createElement('div');
+            $(player_div).addClass('right_arrow_wrap').attr('title', 'Прослушать аудиозапись');
+            var inner_player_div = document.createElement('div');
+            $(inner_player_div).addClass('right_arrow');
+            player_div.appendChild(inner_player_div);
+            outer_player_div.appendChild(player_div);
+            $(player_div).on('click', function () {
+                play_file_jquery({ gid: battle_types[battle_type].battle_group_id, aids: r }, null, null);
+            });
+            oc.html(outer_player_div);
         }
+        $('#flow_header_name').html("Соперник");
+        $('#flow_window').show().focus();
+    }).fail(function(){
+      event_msg_show('Соперник снят с участия за нарушение правил баттла');
     });
 }
 
@@ -1987,11 +2000,11 @@ function get_flow(material_id, user_link, user_name, material_title, battle_type
     if (battle_type === "text_battle") {
         var flow_div = document.createElement("div");
         $(indiv).html(flow_div);
-        ajaxRequest("get_material", {
-            mid: material_id
-        }, {
-            progress: 1,
-            cache: 1
+        $.ajax('{{conf.reqUrl}}/api/material/' + material_id + '/content', {
+          xhrFields: {
+            withCredentials: true
+          },
+          cache: true
         }).done(function (mcontent) {
             $(flow_div).addClass("flow_text_ready_class").html(mcontent);
         });
@@ -2006,11 +2019,12 @@ function get_flow(material_id, user_link, user_name, material_title, battle_type
         player_div.appendChild(inner_player_div);
         outer_player_div.appendChild(player_div);
         $(player_div).on('click', function () {
-            ajaxRequest("get_material",
-                 {
-                     mid: material_id
-                 },
-                 {}).done(function (mcontent) {
+            $.ajax('{{conf.reqUrl}}/api/material/' + material_id + '/content', {
+              xhrFields: {
+                withCredentials: true
+              },
+              cache: true
+            }).done(function (mcontent) {
                      var mcontent_array = mcontent.split('_');
                      if (mcontent_array.length !== 2) { sys_msg_show(); return; }
                      var mcontent_json = {
@@ -2344,7 +2358,10 @@ function add_comment_to_material(comment_text, material_id, comment_sign, commen
         comment_text: encodeURIComponent(comment_text),
         material_id: material_id,
         comment_sign: comment_sign
-      })
+      }),
+      xhrFields: {
+        withCredentials: true
+      }
     }).done(function () {
         add_comments_to_block(material_id, comments_div, battle_type, true, null);
         $(reply_textarea).val('');
@@ -2657,10 +2674,15 @@ function show_settings(in_str) {
     $(entire_name_div).append('<div style="padding:5px 0 0 0"><button type="button" class="btn btn-primary" onclick="save_nn()">Сохранить</button></div>');
     $(setting_div).append(entire_name_div);
 
-    ajaxRequest("get_is_page_show", {}, {}).done(function (r) {
-        if (r != null) {
-            $(setting_div).append('<div class="setting_block" style="text-align:center"><label><span class="link_view">Разрешить показывать ссылку на Вашу страницу в социальной сети</span><input type="checkbox" onchange="set_is_page_show(this.checked); return false;" ' + (r ? 'checked="true"' : '') + false + '" /></label></div>');
-        }
+    $.ajax('{{conf.reqUrl}}/api/user-info', {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
+      var tmpIsPageShow = r['IsPageShow'];
+      $(setting_div).append('<div class="setting_block" style="text-align:center"><label><span class="link_view">Разрешить показывать ссылку на Вашу страницу в социальной сети</span><input type="checkbox" onchange="set_is_page_show(this.checked); return false;" ' + (tmpIsPageShow ? 'checked="true"' : '') + false + '" /></label></div>');
     });
 
 
@@ -2856,16 +2878,17 @@ function construct_player(file_url, pl, artist, title) {
 var zx = {
     get_materials_ocen_counters: function () {
         //получить счётчик - количество неоткрытых оценок
-        ajaxRequest("get_materials_ocen_counters", {}, {
-            cache: 1
+        $.ajax('{{conf.reqUrl}}/api/material-scope/unopened', {
+          xhrFields: {
+             withCredentials: true
+          },
+          cache: false
         }).done(function (r) {
-            for (var i = 0; i < r.length; i++) {
-
-                $('#not_open_counter_' + r[i].mtype).html(
-                    (r[i].gm_count > 0) ? ("+" + r[i].gm_count + "оц") : "&nbsp;"
-                );
-
-            }
+          for (var i = 0; i < r.length; i++) {
+            $('#not_open_counter_' + r[i].mtype).html(
+                (r[i].gm_count > 0) ? ("+" + r[i].gm_count + "оц") : "&nbsp;"
+            );
+          }
         });
     },
     get_materials: function (in_mtype) {
@@ -2873,8 +2896,14 @@ var zx = {
         $("#lk_materials").html(gm_div);
         $(gm_div).html('<div class="upload_progress" style="margin-top:8px">&nbsp;</div>');
 
-        ajaxRequest("get_materials", { in_mtype: in_mtype }, {
-            cache: 1
+        $.ajax('{{conf.reqUrl}}/api/material', {
+          data: {
+            typeOfMaterial: in_mtype
+          },
+          xhrFields: {
+             withCredentials: true
+          },
+          cache: true
         }).done(function (r) {
             var i_max = r.length;
             if (i_max == 0) {

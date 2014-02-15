@@ -1757,8 +1757,12 @@ function get_rival_flow(comment_id, battle_type) {
 }
 
 function open_bout_unit(bout_unit_id, rtrn_values) {
-    ajaxRequest("open_bout_unit", { bout_unit_id: bout_unit_id }, {
-        progress: 1
+    $.ajax('{{conf.reqUrl}}/api/boutunit/' + bout_unit_id, {
+      type: 'POST',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
     }).done(function (r) {
         if (r === false) {
             $("#out_header_name").html("Недостаточно монет");
@@ -1795,57 +1799,6 @@ function open_bout_unit(bout_unit_id, rtrn_values) {
         }
     });
 }
-
-////function open_bout_unit(bout_unit_id, rtrn_values) {
-////    ////ajaxRequest("open_bout_unit", { bout_unit_id: bout_unit_id }, {
-////    ////ajaxRequest(openUrl, null, {
-////    ////    requestType: "GET",
-////    ////    progress: 1
-
-////    var openUrl = ...
-////    $.ajax(openUrl, {
-////        type: "GET",
-////        cache: false
-////    })
-////    .done(function () {
-////        update_balance_string();
-////        rtrn_values.rtrn_function();
-////    }).fail(function (e) {
-////        console.log(e);
-////        if (e.status === 400) {
-////            if (e.statusText === 'NotEnoughCoinForOpen') {
-////                $("#out_header_name").html("Недостаточно монет");
-////                var inner_div = document.createElement("div");
-////                $("#out_content").html(inner_div);
-////                $(inner_div).append("<h5>Недостаточно монет для открытия комментария</h5>");
-////                $(inner_div).append($('<div></div>').css({ "margin": "4px", "text-align": "center", "padding": "4px", "border": "1px solid #E7EAED", "border-radius": "2px" }).html('<span style="font-weight:bold">Монета</span> - универсальное средство обмена в приложении баттла'));
-////                $(inner_div).append('<h5>Способы получения монет:</h5>');
-////                $(inner_div).append(
-////                    $('<ul></ul>').addClass("listing")
-////                        .append('<li>оценивание произведений текстового баттла (*доступно опытным участникам)</li>')
-////                        .append('<li>оценивание произведений аудиобаттла (*доступно любому участнику)</li>')
-////                        .append('<li>оценивание произведений битмейкер-баттла (*доступно любому участнику)</li>')
-////                        .append(
-////                            $('<li></li>').html(
-////                                $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
-////                                    out_window_hide();
-////                                    showPaymentBox();
-////                                })
-////                            )
-////                        )
-////                );
-
-////                $(inner_div).append(
-////                    $('<p></p>').append(
-////                        '*по завершению раунда нераскрытые комментарии и оценки можно будет открыть за ту же стоимость в каталоге Ваших документов на главной странице баттла'
-////                    )
-////                );
-
-////                $("#out_window").show().focus();
-////            }
-////        }
-////    });
-////}
 
 function showNotEnoughMoneyNotification() {
     $("#out_header_name").html("Недостаточно монет");
@@ -2247,12 +2200,17 @@ function add_comments_to_block(material_id, need_div, battle_type, is_shared, st
                             $(submitButton).html('Оценить комментарий').addClass('btn').on('click', function () {
                                 var coinCount = $(star_comment_div).rateit("value");
                                 var coinAnswer = $(inputPricePlusAnswer).val();
-                                ajaxRequest('price_plus_bout_unit', {
-                                    bout_unit_id: pricePlusEvent.data.pricePlusCommentId,
-                                    price_plus: coinCount,
-                                    price_plus_answer: coinAnswer
-                                }, {
-                                    progress: 1
+                                
+                                $.ajax('{{conf.reqUrl}}/api/bout-unit/'+ pricePlusEvent.data.pricePlusCommentId + '/price-plus', {
+                                  type: 'POST',
+                                  contentType: 'application/json;charset=utf-8',
+                                  xhrFields: {
+                                    withCredentials: true
+                                  },
+                                  data: JSON.stringify({
+                                    'Quantity': coinCount,
+                                    'Answer': coinAnswer
+                                  })
                                 });
 
                                 $("#out_window").hide();

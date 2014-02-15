@@ -577,12 +577,17 @@
             $(submitButton).html('Оценить комментарий').addClass('btn').on('click', function () {
                 var coinCount = $(star_comment_div).rateit("value");
                 var coinAnswer = $(inputPricePlusAnswer).val();
-                ajaxRequest('price_plus_bout_unit', {
-                    bout_unit_id: self.id,
-                    price_plus: coinCount,
-                    price_plus_answer: coinAnswer
-                }, {
-                    progress: 1
+                
+                $.ajax('{{conf.reqUrl}}/api/bout-unit/'+ self.id + '/price-plus', {
+                  type: 'POST',
+                  contentType: 'application/json;charset=utf-8',
+                  xhrFields: {
+                    withCredentials: true
+                  },
+                  data: JSON.stringify({
+                    'Quantity': coinCount,
+                    'Answer': coinAnswer
+                  })
                 });
 
                 $("#out_window").hide();
@@ -606,20 +611,7 @@
             if (btlApp.viewModel.currentUserProfile().balance() < self.openPrice) {
                 showNotEnoughMoneyNotification();
                 return;
-            }            
-
-            ////datacontext.openBoutUnit(self.id).done(function () {
-            ////    update_balance_string();
-            ////    // update comments
-            ////    parent.getBoutUnitList();
-            ////}).fail(function (e) {
-            ////    ////if (e.statusText === 'NotEnoughMoney') {
-            ////    ////    showNotEnoughMoneyNotification();
-            ////    ////}
-            ////    ////else {
-            ////    self.errorMessage("Возникла непредвиденная ошибка при открытии комментария");
-            ////    //}
-            ////});
+            }
         };
 
         // Non-persisted properties

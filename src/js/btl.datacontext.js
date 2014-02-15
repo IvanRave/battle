@@ -158,11 +158,6 @@ window.btlApp.datacontext = (function () {
         return new datacontext.boutUnit(data, parent);
     }
 
-    // function openBoutUnit(boutUnitId) {
-        // return ajaxRequest("GET", "...bout-unit/" + boutUnitId + "/open");
-        // ////return ajaxRequest("POST", serviceUrl("OpenBoutUnit"), { id: id });
-    // }
-
     var datacontext = {
         // battle type
         getBattleTypeList: getBattleTypeList,
@@ -194,7 +189,6 @@ window.btlApp.datacontext = (function () {
         // bout unit
         getBoutUnitList: getBoutUnitList,
         createBoutUnit: createBoutUnit
-        ////openBoutUnit: openBoutUnit
     };
 
     return datacontext;

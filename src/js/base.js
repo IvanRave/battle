@@ -327,10 +327,9 @@ function auth(login_options) {
         xhrFields: {
              withCredentials: true
         },
-        //url: "/wservice/login.svc/userlogin",
-        url: "{{conf.reqUrl}}/api/userprofile/",
+        url: '{{conf.reqUrl}}/api/userprofile/',
         data: JSON.stringify(login_data_json),
-        contentType: "application/json;charset=utf-8"
+        contentType: 'application/json;charset=utf-8'
     })
     .done(function (r) {
         if (r && r.islogin) {
@@ -1468,9 +1467,33 @@ function judge_send_two_comments(battle_type, json_cm) {
     json_cm.flow_comment2 = encodeURIComponent(json_cm.flow_comment2);
 
     $('#' + battle_type + '_send_golos').attr('disabled', 'disabled');
-
-    ajaxRequest("judge_send_two_comments", json_cm, {
-        progress: 1
+    
+    $.ajax('{{conf.reqUrl}}/api/judge-evaluation', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false,
+      data: JSON.stringify({
+        'JudgeEvaluation1': {
+          'IdOfMaterial': json_cm.flow_id1,
+          'Comment': json_cm.flow_comment1,
+          'RatingRhyme': json_cm.flow_rating_rhyme_1,
+          'RatingTheme': json_cm.flow_rating_theme_1,
+          'RatingGeneral': json_cm.flow_rating_general_1,
+          'IsCommentSign': json_cm.comment_sign_1
+        },
+        'JudgeEvaluation2': {
+          'IdOfMaterial': json_cm.flow_id2,
+          'Comment': json_cm.flow_comment2,
+          'RatingRhyme': json_cm.flow_rating_rhyme_2,
+          'RatingTheme': json_cm.flow_rating_theme_2,
+          'RatingGeneral': json_cm.flow_rating_general_2,
+          'IsCommentSign': json_cm.comment_sign_2
+        },
+        'IsFirstWinner': parseInt(json_cm.voice_win) > 0
+      })
     }).done(function (r) {
         $('#' + battle_type + '_judging_block').hide();
         update_balance_string();
@@ -1490,9 +1513,21 @@ function judge_send_two_comments(battle_type, json_cm) {
         //                '<button onclick="' + battle_type + '_judging()">Оценить ещё</button>'
         // '<p style="margin-top:4px">За каждую благодарность к Вашему комментарию дополнительно начисляется 5 монет (по окончании раунда)</p>',
         //'<p>Жалобы на Ваши комментарии и оценки могут привести к блокировке судейства на неопределённый срок.</p>'
-        ajaxRequest("judge_send_notif", { flow_id: json_cm.flow_id1 }, {});
+        
+        function sendEvaluationNotification(tmpIdOfMaterial){
+          $.ajax('{{conf.reqUrl}}/api/material/' + tmpIdOfMaterial + '/evaluation-notification', {
+            type: 'GET',
+            cache: false,
+            xhrFields: {
+              withCredentials: true
+            }
+          });
+        }
+        
+        sendEvaluationNotification(json_cm.flow_id1);
+        
         setTimeout(function () {
-            ajaxRequest("judge_send_notif", { flow_id: json_cm.flow_id2 }, {});
+            sendEvaluationNotification(json_cm.flow_id2);
         }, 5000);
     });
 };

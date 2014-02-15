@@ -817,10 +817,17 @@ var bb_tags = {
 };
 
 function send_track_to_battle(battle_type, my_aid, my_oid, my_title) {
-    VK.api("audio.add", { aid: my_aid, gid: battle_types[battle_type].battle_group_id, oid: my_oid }, function (res_new_track) {
+    VK.api('audio.add', { 
+      audio_id: my_aid, 
+      owner_id: my_oid,
+      group_id: battle_types[battle_type].battle_group_id,
+      v: '5.9'
+    }, function (res_new_track) {
         if (res_new_track.error) {
-            if (res_new_track.error.error_code === 201) {
-                event_msg_show('Для участия необходимо вступить в группу: <a href="//vk.com/club' + battle_types[battle_type].battle_group_id + '" target="_blank">vk.com/club' + battle_types[battle_type].battle_group_id + '</a>');
+            // 15 - "Access denied: no access to audio"
+            // 201 - Group
+            if (res_new_track.error.error_code === 201 || res_new_track.error.error_code === 15) {
+                event_msg_show('Для участия необходимо вступить в группу: <a href="//vk.com/club' + battle_types[battle_type].battle_group_id + '" target="_blank">vk.com/club' + battle_types[battle_type].battle_group_id + '</a>. Обновите страницу после вступления в группу.');
             }
             else {
                 sys_msg_show();
@@ -836,13 +843,14 @@ function send_track_to_battle(battle_type, my_aid, my_oid, my_title) {
             artist_new = (user_author.beatmaker_name.value || 'Неизвестный исполнитель');
         }
 
-        VK.api("audio.edit", {
-            aid: res_new_track.response,
-            oid: -parseInt(battle_types[battle_type].battle_group_id, 10),
+        VK.api('audio.edit', {
+            audio_id: res_new_track.response,
+            owner_id: -parseInt(battle_types[battle_type].battle_group_id, 10),
             artist: artist_new,
             title: my_title,
-            text: "",
-            no_search: 0
+            text: '',
+            no_search: 0,
+            v: '5.9'
         }, function () {
             //adding to table with aid (res_new_track.response)
             // and my_oid for checking!
@@ -857,7 +865,17 @@ function send_track_to_battle(battle_type, my_aid, my_oid, my_title) {
 }
 
 function send_track_item_to_battle(json_data) {
-    ajaxRequest("send_item_to_battle", json_data, {}).done(function () {
+    $.ajax('{{conf.reqUrl}}/api/round/' + json_data.round_id + '/material-flow', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      cache: false,
+      xhrFields: {
+        withCredentials: true
+      },
+      data: JSON.stringify({
+        'FlowContent': json_data.flow_text
+      })
+    }).done(function () {
         var subs_div = document.createElement("div");
         popup_msg("Аудиозапись успешно сдана на баттл.", subs_div);
 
@@ -1046,7 +1064,10 @@ function add_audio_to_list(r, in_div, battle_type) {
 
 
 function choose_track(battle_type, album_id) {
-    VK.api("audio.get", { count: scht.count_set, album_id: album_id }, function (audio_arr) {
+    VK.api('audio.get', { 
+        count: scht.count_set, 
+        album_id: album_id 
+      }, function (audio_arr) {
         if (audio_arr.response.length === 0) {
             event_msg_show("Не найдено ни одной аудиозаписи на Вашей странице социальной сети");
             return;
@@ -1103,14 +1124,14 @@ function wall_post(wall_message) {
 function beat_battle_creation() {
     $('#bc_comments').hide();
     $('#bc_player_play').hide();
-    ajaxRequest("get_users_item",
-        {
-            round_id: btl_event.current_round_id
-        },
-        {
-            progress: 1
-        }
-    ).done(function (r) {
+    
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/current-item' , {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
         if (r.flow_text) {
             $('#bc_player_play').off('click').on('click', { aid: r.flow_text }, function (event) {
                 play_file_jquery({ gid: battle_types.beat_battle.battle_group_id, aids: event.data.aid }, null, null);
@@ -1154,8 +1175,13 @@ function audio_battle_creation() {
     $('#ac_comments').hide();
     $('#ac_player_play').hide();
 
-    ajaxRequest("get_users_item", { round_id: btl_event.current_round_id }, { progress: 1 }
-    ).done(function (r) {
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/current-item' , {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
         if (r.flow_text) {
             $('#ac_player_play').off('click').on('click', { aid: r.flow_text }, function (event) {
                 play_file_jquery({ gid: battle_types.audio_battle.battle_group_id, aids: event.data.aid }, null, null);
@@ -1205,7 +1231,6 @@ function fill_audio_battle_rating() {
 
 function set_is_page_show(is_page_show) {
     if (is_page_show !== null) {
-      // ajaxRequest("set_is_page_show", { is_page_show: is_page_show }, {})
       $.ajax('{{conf.reqUrl}}/api/user-info', {
         type: 'POST',
         xhrFields: {
@@ -1263,12 +1288,18 @@ function save_text_current_battle() {
         return;
     }
 
-    ajaxRequest("save_text_current_battle", {
-        flow_text: encodeURIComponent(flow_text),
-        round_id: btl_event.current_round_id
-    }, {
-        progress: 1
-    }).done(function () {
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/temp-flow', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false,
+      data: JSON.stringify({
+        'FlowContent': encodeURIComponent(flow_text)
+      })
+    })
+    .done(function () {
         $('#flow_text').attr('readonly', 'readonly');
         text_battle_creation();
     });
@@ -1278,11 +1309,13 @@ function save_text_current_battle() {
 function text_battle_creation() {
     $('#save_cancel').hide();
     $('#leave_symbol').empty();
-
-    ajaxRequest("get_users_item", {
-        round_id: btl_event.current_round_id
-    }, {
-        progress: 1
+    
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/current-item' , {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
     }).done(function (r) {
         if (r.flow_text) {
             // если есть текст, отображается 
@@ -1618,11 +1651,19 @@ function send_text_to_battle() {
 
     var json_data = {
         round_id: btl_event.current_round_id,
-        flow_text: ""
+        flow_text: ''
     };
 
-    ajaxRequest("send_item_to_battle", json_data, {
-        progress: 1
+    $.ajax('{{conf.reqUrl}}/api/round/' + json_data.round_id + '/material-flow', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      cache: false,
+      xhrFields: {
+        withCredentials: true
+      },
+      data: JSON.stringify({
+        'FlowContent': json_data.flow_text
+      })
     }).done(function () {
         text_battle_creation();
         var subs_div = document.createElement("div");

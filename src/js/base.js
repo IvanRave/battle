@@ -2764,8 +2764,16 @@ function save_nn() {
             data_json[uname] = '';
         }
     }
-
-    ajaxRequest("save_get_your_nickname", data_json, {}).done(function (r) {
+    
+    $.ajax('{{conf.reqUrl}}/api/user-desc', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      data: JSON.stringify(data_json),
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
         if (r) {
             for (var uname in user_author) {
                 if (r[uname] == '9') {
@@ -2805,28 +2813,28 @@ function seconds_to_hms(d) {
 }
 
 
-function get_main_track() {
-    ajaxRequest("get_main_track", {}, {}).done(function (r) {
-        $("#hiphopplayer_title").html('<span style="font-weight:bold">' + r.nick_name + '</span> - ' + r.mname);
-        $("#hiphopplayer_title_note").html(r.note);
-        $("#hiphopplayer").show();
-        $("#player_replacer").on("click", function () {
-            var mcontent_array = r.mcontent.split('_');
-            if (mcontent_array.length != 2) { sys_msg_show(); return; };
-            var mcontent_json = {
-                aids: mcontent_array[1]
-            };
-            if (parseInt(mcontent_array[0]) < 0) {
-                mcontent_json.gid = -parseInt(mcontent_array[0]);
-            }
-            else {
-                mcontent_json.uid = mcontent_array[0];
-            };
-            play_file_jquery(mcontent_json, "//vk.com/id" + r.uid, r.material_id);
-            ajaxRequest("add_material_view", { material_id: r.material_id }, {});
-        });
-    });
-}
+// function get_main_track() {
+    // ajaxRequest("get_main_track", {}, {}).done(function (r) {
+        // $("#hiphopplayer_title").html('<span style="font-weight:bold">' + r.nick_name + '</span> - ' + r.mname);
+        // $("#hiphopplayer_title_note").html(r.note);
+        // $("#hiphopplayer").show();
+        // $("#player_replacer").on("click", function () {
+            // var mcontent_array = r.mcontent.split('_');
+            // if (mcontent_array.length != 2) { sys_msg_show(); return; };
+            // var mcontent_json = {
+                // aids: mcontent_array[1]
+            // };
+            // if (parseInt(mcontent_array[0]) < 0) {
+                // mcontent_json.gid = -parseInt(mcontent_array[0]);
+            // }
+            // else {
+                // mcontent_json.uid = mcontent_array[0];
+            // };
+            // play_file_jquery(mcontent_json, "//vk.com/id" + r.uid, r.material_id);
+            // ajaxRequest("add_material_view", { material_id: r.material_id }, {});
+        // });
+    // });
+// }
 
 
 function bj_play(material_id, audio_copy_data, file_url, pl, beat_artist, beat_title, author_link, lyrics_id) {
@@ -3023,78 +3031,78 @@ var zx = {
     }
 }
 
-function show_marquee_dialog() {
-    $('#out_header_name').html("Размещение объявления в бегущей строке");
-    $('#out_window').show().focus();
-    var inner_div = document.createElement("div");
-    $('#out_content').html(inner_div);
-    $(inner_div).append('<div style="text-align:center;padding:4px; border:1px solid #f1f1f1">Стоимость: <span style="font-weight:bold">100</span> монет - <span style="font-weight:bold">3</span> суток (<span style="font-weight:bold">72</span> часа)</div>');
-    $(inner_div).append('<h5>Тематика объявлений</h5>');
-    $(inner_div).append($('<ul></ul>').addClass("listing").append(
-            "<li>продажа, покупка музыкального оборудования</li>",
-            "<li>предоставление услуг битмейкеров, продажа битов, минусов</li>",
-            "<li>предоставление услуг сведения треков</li>",
-            "<li>реклама страниц и пабликов исполнителей, битмейкеров</li>",
-            "<li>а также другие объявления, соответствующие тематике данного приложения</li>"
-            )
-        );
+// function show_marquee_dialog() {
+    // $('#out_header_name').html("Размещение объявления в бегущей строке");
+    // $('#out_window').show().focus();
+    // var inner_div = document.createElement("div");
+    // $('#out_content').html(inner_div);
+    // $(inner_div).append('<div style="text-align:center;padding:4px; border:1px solid #f1f1f1">Стоимость: <span style="font-weight:bold">100</span> монет - <span style="font-weight:bold">3</span> суток (<span style="font-weight:bold">72</span> часа)</div>');
+    // $(inner_div).append('<h5>Тематика объявлений</h5>');
+    // $(inner_div).append($('<ul></ul>').addClass("listing").append(
+            // "<li>продажа, покупка музыкального оборудования</li>",
+            // "<li>предоставление услуг битмейкеров, продажа битов, минусов</li>",
+            // "<li>предоставление услуг сведения треков</li>",
+            // "<li>реклама страниц и пабликов исполнителей, битмейкеров</li>",
+            // "<li>а также другие объявления, соответствующие тематике данного приложения</li>"
+            // )
+        // );
 
-    $(inner_div).append('<div style="text-align:center; padding:4px; border:1px solid #f1f1f1">На Вашем счете: <span style="font-weight:bold">' + btlApp.viewModel.currentUserProfile().balance() + plural_number(btlApp.viewModel.currentUserProfile().balance(), ' монет', '', 'ы', '') + '</span></div>');
+    // $(inner_div).append('<div style="text-align:center; padding:4px; border:1px solid #f1f1f1">На Вашем счете: <span style="font-weight:bold">' + btlApp.viewModel.currentUserProfile().balance() + plural_number(btlApp.viewModel.currentUserProfile().balance(), ' монет', '', 'ы', '') + '</span></div>');
 
-    if (btlApp.viewModel.currentUserProfile().balance() < 100) {
-        $(inner_div).append(
-            $('<p></p>').append("На вашем счете недостаточно средств: ",
-                $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
-                    out_window_hide();
-                    showPaymentBox();
-                })
-            )
-        )
-    } else if (btlApp.viewModel.currentUserProfile().balance() >= 100) {
-        $(inner_div).append('<h5>Текст сообщения бегущей строки:</h5>');
+    // if (btlApp.viewModel.currentUserProfile().balance() < 100) {
+        // $(inner_div).append(
+            // $('<p></p>').append("На вашем счете недостаточно средств: ",
+                // $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
+                    // out_window_hide();
+                    // showPaymentBox();
+                // })
+            // )
+        // )
+    // } else if (btlApp.viewModel.currentUserProfile().balance() >= 100) {
+        // $(inner_div).append('<h5>Текст сообщения бегущей строки:</h5>');
 
-        var beg_string_input = document.createElement("input");
-        $(beg_string_input).attr({
-            "type": "text",
-            "maxlength": "60",
-            "placeholder": "текст сообщения бегущей строки"
-        }).css({ "width": "100%" });
+        // var beg_string_input = document.createElement("input");
+        // $(beg_string_input).attr({
+            // "type": "text",
+            // "maxlength": "60",
+            // "placeholder": "текст сообщения бегущей строки"
+        // }).css({ "width": "100%" });
 
-        $(inner_div).append($('<div></div>').html(beg_string_input));
-        $(inner_div).append('<div style="text-size:10px">*максимальная длина сообщения: 60 символов</div>');
-        $(inner_div).append('<h5>Прикрепляемая ссылка к тексту</h5>');
+        // $(inner_div).append($('<div></div>').html(beg_string_input));
+        // $(inner_div).append('<div style="text-size:10px">*максимальная длина сообщения: 60 символов</div>');
+        // $(inner_div).append('<h5>Прикрепляемая ссылка к тексту</h5>');
 
-        var beg_link_input = document.createElement('input');
-        $(beg_link_input).attr({
-            "type": "text",
-            "maxlength": "140"
-        }).css({ "width": "100%" }).val("//vk.com/");
+        // var beg_link_input = document.createElement('input');
+        // $(beg_link_input).attr({
+            // "type": "text",
+            // "maxlength": "140"
+        // }).css({ "width": "100%" }).val("//vk.com/");
 
-        $(inner_div).append($('<div></div>').html(beg_link_input));
-        $(inner_div).append('<div style="text-size:10px">*только внутренняя ссылка ВКонтакте</div>');
-        $(inner_div).append(
-            $('<div></div>').css({ "text-align": "center", "padding": "4px" }).html(
-                $('<div></div>').html(
-                    $('<button/>').prop("type", "button").addClass("btn btn-primary").html('Отправить заявку').on("click", function () {
-                        var beg_string_val = $(beg_string_input).val();
-                        var beg_link_val = $(beg_link_input).val();
+        // $(inner_div).append($('<div></div>').html(beg_link_input));
+        // $(inner_div).append('<div style="text-size:10px">*только внутренняя ссылка ВКонтакте</div>');
+        // $(inner_div).append(
+            // $('<div></div>').css({ "text-align": "center", "padding": "4px" }).html(
+                // $('<div></div>').html(
+                    // $('<button/>').prop("type", "button").addClass("btn btn-primary").html('Отправить заявку').on("click", function () {
+                        // var beg_string_val = $(beg_string_input).val();
+                        // var beg_link_val = $(beg_link_input).val();
 
-                        if (beg_string_val.length == 0) {
-                            $(beg_string_input).focus();
-                            return;
-                        }
-                        out_window_hide();
-                        ajaxRequest("beg_zayavka", { beg_string: beg_string_val, beg_link: beg_link_val }, {}).done(function () {
-                            event_msg_show("Заявка успешно отправлена");
-                            coin_transfer("IvanRave", 100, "Бегущая строка");
-                        });
-                    })
-                )
-            )
-        )
-        $(inner_div).append('<p>Заявка отправляется на модерацию. После отправки c Вашего баланса снимается (резервируется) 100 монет. В случае одобрения текст будет размещён в бегущей строке. В случае отклонения заявки монеты возвращаются в течение 24 часов.</p>');
-    }
-}
+                        // if (beg_string_val.length == 0) {
+                            // $(beg_string_input).focus();
+                            // return;
+                        // }
+                        // out_window_hide();
+                        // ajaxRequest("beg_zayavka", { beg_string: beg_string_val, beg_link: beg_link_val }, {}).done(function () {
+                            // event_msg_show("Заявка успешно отправлена");
+                            // coin_transfer("IvanRave", 100, "Бегущая строка");
+                        // });
+                    // })
+                // )
+            // )
+        // )
+        // $(inner_div).append('<p>Заявка отправляется на модерацию. После отправки c Вашего баланса снимается (резервируется) 100 монет. В случае одобрения текст будет размещён в бегущей строке. В случае отклонения заявки монеты возвращаются в течение 24 часов.</p>');
+    // }
+// }
 
 function coin_transfer(recipient_username, coin_sum, msg) {
     var jd = {

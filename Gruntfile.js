@@ -98,7 +98,18 @@ module.exports = function(grunt) {
         },
         src: '**/*'
       }
-    }
+    },
+    'ftp-deploy' : {
+			build : {
+				auth : {
+					host : 'waws-prod-am2-001.ftp.azurewebsites.windows.net',
+					port : 21,
+					authKey : 'key1'
+				},
+				src : '<%= trgt %>',
+				dest : '/site/wwwroot/'
+			}
+		}
   });
 
   // These plugins provide necessary tasks
@@ -108,6 +119,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-gh-pages');
   grunt.loadNpmTasks('assemble');
+  grunt.loadNpmTasks('grunt-ftp-deploy');
   
   // Default task 
   // 'jshint',

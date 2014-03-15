@@ -1965,9 +1965,7 @@ function fill_rating_table(rd, battle_type, out_block) {
             var showing_name = (battle_type === 'beat_battle') ? rd[key].beatmaker_name : rd[key].nick_name;
             var name_link_a = document.createElement('span');
 
-            $(name_link_a).on('click', { flow_id: rd[key].flow_id, user_link: rd[key].user_link, user_name: showing_name, battle_type: battle_type }, function (event) {
-                get_flow(event.data.flow_id, event.data.user_link, event.data.user_name, "", event.data.battle_type);
-            }).addClass('link_view');
+            $(name_link_a).on('click', { flow_id: rd[key].flow_id, user_link: rd[key].user_link, user_name: showing_name, battle_type: battle_type }, handleRoundClick).addClass('link_view');
 
             name_link_a.appendChild(document.createTextNode(showing_name || '???'));
             name_link_div.appendChild(name_link_a);
@@ -2455,9 +2453,7 @@ function fill_rating_table_top(rd, battle_type, out_block) {
         $(nick_span).html(user_name || '???')
             .addClass('link_view')
             .css('margin-left', '5px')
-            .on('click', { flow_id: rd[key].flow_id, user_link: rd[key].user_link, user_name: user_name, battle_type: battle_type }, function (event) {
-                get_flow(event.data.flow_id, event.data.user_link, event.data.user_name, "", event.data.battle_type);
-            });
+            .on('click', { flow_id: rd[key].flow_id, user_link: rd[key].user_link, user_name: user_name, battle_type: battle_type }, handleRoundClick);
         $(first_div).append(nick_span);
         if (rd[key].user_link) {
             $(first_div).append('<span style="margin-left:4px"><a class="img_link_user" style="display:inline-block" href="' + rd[key].user_link + '" target="_blank"></a></span>');
@@ -2518,9 +2514,7 @@ function get_round_result(round_chislo, battle_type, battle_number) {
                     $(winner_span).addClass('link_view')
                         .css('text-shadow', '#69C 1px 1px 1px')
                         .html(r[w_key].nick_name || '???')
-                        .on('click', { flow_id: r[w_key].flow_id, user_link: r[w_key].user_link, nick_name: r[w_key].nick_name, battle_type: battle_type }, function (event) {
-                            get_flow(event.data.flow_id, event.data.user_link, event.data.nick_name, "", event.data.battle_type);
-                        });
+                        .on('click', { flow_id: r[w_key].flow_id, user_link: r[w_key].user_link, user_name: r[w_key].nick_name, battle_type: battle_type }, handleRoundClick);
                     $('#battle_place_' + w_key).html(winner_span);
                     if (r[w_key].user_link) {
                         $('#battle_place_' + w_key).append('<a href="' + r[w_key].user_link + '" target="_blank" style="margin-left:5px"><img src="Images/iel.png"/></a>');
@@ -2932,6 +2926,14 @@ function construct_player(file_url, pl, artist, title) {
 }
 
 
+function handleGetMaterials(event) {
+    var btl_type = event.data.mtype + '_battle';
+    var u_n = (btl_type === 'beat_battle') ? user_author.beatmaker_name.value : user_author.nick_name.value;
+
+    get_flow(event.data.id, null, u_n, event.data.mname, btl_type, 'material_container');
+    $('#btl_list_sub').hide();
+}
+
 var zx = {
     get_materials_ocen_counters: function () {
         //получить счётчик - количество неоткрытых оценок
@@ -2972,13 +2974,7 @@ var zx = {
             for (var i = 0; i < i_max; i++) {
                 var idiv = document.createElement("div");
                 $(idiv).addClass("material_div");
-                $(idiv).on("click", { mtype: r[i].mtype, id: r[i].id, mname: r[i].mname }, function (event) {
-                    var btl_type = event.data.mtype + "_battle";
-                    var u_n = (btl_type === 'beat_battle') ? user_author.beatmaker_name.value : user_author.nick_name.value;
-
-                    get_flow(event.data.id, null, u_n, event.data.mname, btl_type, "material_container");
-                    $('#btl_list_sub').hide();
-                });
+                $(idiv).on('click', { mtype: r[i].mtype, id: r[i].id, mname: r[i].mname }, handleGetMaterials);
 
                 var ispan = document.createElement("span");
                 ispan.appendChild(document.createTextNode(r[i].mname));

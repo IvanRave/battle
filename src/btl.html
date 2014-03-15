@@ -24,11 +24,10 @@
     <script src="//vk.com/js/api/xd_connection.js?2" type="text/javascript"></script>
     <script src="scripts/jquery.rateit.min.js"></script>
     <script src="scripts/knockout-2.3.0.js"></script>
-    <script src="js/base.js?42"></script>
-    <script src="js/vk_main.js?42"></script>
-    <script src="js/btl.datacontext.js?42"></script>
-    <script src="js/btl.model.js?42"></script>
-    <script src="js/btl.viewmodel.js?42"></script>
+    <script src="js/base.js?43"></script>
+    <script src="js/btl.datacontext.js?43"></script>
+    <script src="js/btl.model.js?43"></script>
+    <script src="js/btl.viewmodel.js?43"></script>
     <script src="scripts/mediaelementjs/mediaelement-and-player.min.js"></script>
 </head>
 <body>
@@ -1084,7 +1083,7 @@
                 <div data-bind="foreach: { data: battleTypeList, as: 'battleTypeItem' }" class="clearfix" style="min-height: 80px">
                     <div class="pull-left" style="width: 140px; margin: 0 8px">
                         <div class="header-block-light" style="padding: 4px 2px; border: 1px solid #517597; color: #f1f1f1; background-color: #517597; text-align: center; font-variant: small-caps; width: 100%">
-                            <i data-bind="css: 'icon-white icon-' + iconName"></i>&nbsp;<span data-bind="    text: fullTitle"></span>
+                            <i data-bind="css: 'icon-white icon-' + iconName"></i>&nbsp;<span data-bind="text: fullTitle"></span>
                         </div>
                         <div data-bind="foreach: ko.utils.arrayFilter($parent.battleSeasonList(), function (item) { return (item.btlType === (battleTypeItem.id + '_battle')); })">
                             <div class="battle_block" data-bind="click: selectBattleSeason">

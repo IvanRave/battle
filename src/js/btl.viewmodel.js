@@ -53,7 +53,7 @@ window.btlApp.viewModel = (function (ko, datacontext) {
             var arrForGettingAvatar = [];
             $.each(vm.listWinnerMaterial(), function (arrIndex, arrElem) {
                 if (arrElem.userProfile().userName) {
-                    arrForGettingAvatar.push(parseInt(arrElem.userProfile().userName.substr(1)));
+                    arrForGettingAvatar.push(parseInt(arrElem.userProfile().userName.substr(1), 10));
                 }
             });
             
@@ -110,4 +110,4 @@ window.btlApp.viewModel = (function (ko, datacontext) {
     ////};
 
     return vm;
-})(ko, btlApp.datacontext);
+})(ko, window.btlApp.datacontext);

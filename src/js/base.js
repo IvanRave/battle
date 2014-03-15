@@ -1,5 +1,3 @@
-var chatHubClient;
-
 var battleplayer;
 
 if (!Array.indexOf) {
@@ -11,6 +9,606 @@ if (!Array.indexOf) {
         }
         return -1;
     };
+}
+
+function generate_judging_texts(bt, is_alternative) {
+    $('#event_msg_block').empty().hide();
+    document.getElementById(bt + '_judging_comment_1').value = '';
+    document.getElementById(bt + '_judging_comment_2').value = '';
+    //обнуление всех элементов
+    $('#' + bt + '_comment_sign_1').removeAttr('checked');
+    $('#' + bt + '_comment_sign_2').removeAttr('checked');
+    $('#' + bt + '_judging_block').hide();
+    $('#' + bt + '_send_golos').attr('disabled', 'disabled');
+    $('#' + bt + '_itog_rating_1').html(0).css('background-color', '#5E80A5');
+    $('#' + bt + '_itog_rating_2').html(0).css('background-color', '#5E80A5');
+    $('#' + bt + '_ocenka_msg').empty();
+
+    $.ajax('{{conf.reqUrl}}/api/material?round_id=' + btl_event.current_round_id + '&is_alternative=' + is_alternative, {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
+            if (r.length < 2) {
+                event_msg_show('Недостаточно произведений для оценивания');
+                return;
+            }
+
+            var mt1 = new MaterialDto(r[0]);
+            var mt2 = new MaterialDto(r[1]);
+
+            var json_array_div1 = {};
+            var json_array_div2 = {};
+
+            $('#' + bt + '_rating_stars_1').html(get_star_rating_string(bt, 1, json_array_div1));
+            $('#' + bt + '_rating_stars_2').html(get_star_rating_string(bt, 2, json_array_div2));
+
+            $('#' + bt + '_claim_1').off('click').on('click', { flow_id: mt1.id }, function (event) {
+                send_claim(event.data.flow_id);
+            });
+            $('#' + bt + '_claim_2').off('click').on('click', { flow_id: mt2.id }, function (event) {
+                send_claim(event.data.flow_id);
+            });
+
+            if (bt === 'audio_battle' || bt === 'beat_battle') {
+                $('#' + bt + '_judging_player_1_run').off('click').on('click', { aid: mt1.mcontent, player_number: 1, battle_type: bt }, function (event) {
+                    play_audio_judging(event.data.aid, event.data.player_number, event.data.battle_type);
+                }).show();
+                $('#' + bt + '_judging_player_2_run').off('click').on('click', { aid: mt2.mcontent, player_number: 2, battle_type: bt }, function (event) {
+                    play_audio_judging(event.data.aid, event.data.player_number, event.data.battle_type);
+                }).show();
+            }
+            else if (bt === "text_battle") {
+                $('#flow_text_ready_1').html(mt1.mcontent);
+                $('#text_battle_j_header_1').html(mt1.mname);
+
+                $('#flow_text_ready_2').html(mt2.mcontent);
+                $('#text_battle_j_header_2').html(mt2.mname);
+            }
+
+
+            $('#' + bt + '_timer_block').html('59').show();
+            setTimeout(function () { }, 1000);
+            setTimeout(function () {
+                timer(bt);
+            }, 1000);
+
+
+            $('#' + bt + '_send_golos').off('click').on('click', function () {
+                judge_send_two_comments(bt, {
+                    flow_id1: mt1.id,
+                    flow_id2: mt2.id,
+                    flow_comment1: text_work(document.getElementById(bt + '_judging_comment_1').value),
+                    flow_comment2: text_work(document.getElementById(bt + '_judging_comment_2').value),
+                    flow_rating_rhyme_1: $(json_array_div1.rhyme).rateit("value"),
+                    flow_rating_rhyme_2: $(json_array_div2.rhyme).rateit("value"),
+                    flow_rating_theme_1: $(json_array_div1.theme).rateit("value"),
+                    flow_rating_theme_2: $(json_array_div2.theme).rateit("value"),
+                    flow_rating_general_1: $(json_array_div1.general).rateit("value"),
+                    flow_rating_general_2: $(json_array_div2.general).rateit("value"),
+                    comment_sign_1: $('#' + bt + '_comment_sign_1').is(':checked'),
+                    comment_sign_2: $('#' + bt + '_comment_sign_2').is(':checked'),
+                    voice_win: null
+                });
+            });
+            $('#' + bt + '_judging_block').show();
+            //judging_procent(bt);
+        });
+}
+
+function handleSendClaimClick(event) {
+  $.ajax('{{conf.reqUrl}}/api/log-record', {
+    type: 'POST',
+    contentType: 'application/json;charset=utf-8',
+    data: JSON.stringify({
+      LogSubject: 'MaterialClaim',
+      LogBody: 'Claim: ' + event.data.claim + '; Material: ' + event.data.flow_id
+    })
+  });
+ 
+  out_window_hide();
+}
+
+function send_claim(flow_id) {
+    $('#out_window').show().focus();
+    $('#out_header_name').html('Заявка о нарушение правил');
+    $('#out_content').html('<h5>Укажите пункт нарушения правил</h5>');
+    
+    for (var key = 0, max_key = claim_punkt.length; key < max_key; key++) {
+        var claim_type_div = document.createElement('div');
+        $(claim_type_div).addClass('radiobtn').on('click', { claim: claim_punkt[key], flow_id: flow_id }, handleSendClaimClick);
+        claim_type_div.appendChild(document.createElement('div'));
+        claim_type_div.appendChild(document.createTextNode(claim_punkt[key]));
+        $('#out_content').append(claim_type_div);
+    }
+    $('#out_content').append('<p>При выборе варианта "Другое" по возможности свяжитесь с администрацией баттла и укажите причину</p><p>Заявка о нарушении правил рассматривается некоторое время, поэтому можно продолжать оценивать далее произведения, соответственно занижая оценки произведениям, нарушающим правила. После рассмотрения заявки о нарушении, администрация баттла по своему усмотрению решает вопрос о снятии произведения с дальнейшего участия в баттле</p>');
+}
+
+function text_battle_judging(is_alternative_in) {
+    var is_alternative = (is_alternative_in) ? true : false;
+    generate_judging_texts('text_battle', is_alternative);
+}
+
+
+function send_text_to_battle() {
+    // $('#send_text_to_battle_button').attr('disabled', 'disabled');
+    var count_value = $('textarea#flow_text').val().length;
+    var enter_value = $('textarea#flow_text').val().split('\n').length;
+    var min_length = 300;
+    var min_string = 12;
+
+    if (count_value < min_length || enter_value < min_string) {
+        event_msg_show('Минимальное количество строк для участия в баттле: ' + min_string + ' (' + min_length + ' символов)');
+        $('textarea#flow_text').focus();
+        $('#send_text_to_battle_button').removeAttr('disabled', 'disabled');
+        return;
+    }
+
+    var json_data = {
+        round_id: btl_event.current_round_id,
+        flow_text: ''
+    };
+
+    $.ajax('{{conf.reqUrl}}/api/round/' + json_data.round_id + '/material-flow', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      cache: false,
+      xhrFields: {
+        withCredentials: true
+      },
+      data: JSON.stringify({
+        'FlowContent': json_data.flow_text
+      })
+    }).done(function () {
+        text_battle_creation();
+        var subs_div = document.createElement("div");
+        popup_msg("Текст успешно сдан на баттл. Оценки и комментарии будут публиковаться под текстом по ходу оценивания.", subs_div);
+
+        btlApp.viewModel.selectedBattleSeason().currentBattleRound().getAuthUserRoundMaterial();
+
+        VK.api("getUserSettings", function (gus) {
+            if ((gus.response & 1) !== 1) {
+                var subs_cmnt_in = document.createElement("span");
+                subs_cmnt_in.appendChild(document.createTextNode("Разрешить приложению присылать уведомления (о новых оценках, комментариях, запуске новых раундов)"));
+                $(subs_cmnt_in).on('click', function () {
+                    VK.callMethod("showSettingsBox", 1);
+                }).addClass("link_view");
+                subs_div.appendChild(subs_cmnt_in);
+            }
+        });
+
+    }).always(function () {
+        $('#send_text_to_battle_button').removeAttr('disabled', 'disabled');
+    });
+}
+
+function get_rival_flow(comment_id, battle_type) {
+    $.ajax('{{conf.reqUrl}}/api/bout-unit/' + comment_id + '/material-content/rival', {
+      type: 'GET',
+      xhrFields: {
+          withCredentials: true
+      },
+      cache: true
+    }).done(function (r) {
+        var oc = $("#flow_content");
+        oc.empty();
+        if (battle_type === 'text_battle') {
+            oc.html('<p>' + r + '</p>');
+        }
+        else {
+            var outer_player_div = document.createElement('div');
+            $(outer_player_div).css({ 'border': '1px solid #E7EAED', 'padding': '4px' });
+            var player_div = document.createElement('div');
+            $(player_div).addClass('right_arrow_wrap').attr('title', 'Прослушать аудиозапись');
+            var inner_player_div = document.createElement('div');
+            $(inner_player_div).addClass('right_arrow');
+            player_div.appendChild(inner_player_div);
+            outer_player_div.appendChild(player_div);
+            $(player_div).on('click', function () {
+                play_file_jquery({ gid: battle_types[battle_type].battle_group_id, aids: r }, null, null);
+            });
+            oc.html(outer_player_div);
+        }
+        $('#flow_header_name').html("Соперник");
+        $('#flow_window').show().focus();
+    }).fail(function(){
+      event_msg_show('Соперник снят с участия за нарушение правил баттла');
+    });
+}
+
+function open_bout_unit(bout_unit_id, rtrn_values) {
+    $.ajax('{{conf.reqUrl}}/api/boutunit/' + bout_unit_id, {
+      type: 'POST',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
+        if (r === false) {
+            $("#out_header_name").html("Недостаточно монет");
+            var inner_div = document.createElement("div");
+            $("#out_content").html(inner_div);
+            $(inner_div).append("<h5>Недостаточно монет для открытия комментария</h5>");
+            $(inner_div).append($('<div></div>').css({ "margin": "4px", "text-align": "center", "padding": "4px", "border": "1px solid #E7EAED", "border-radius": "2px" }).html('<span style="font-weight:bold">Монета</span> - универсальное средство обмена в приложении баттла'));
+            $(inner_div).append('<h5>Способы получения монет:</h5>');
+            $(inner_div).append(
+                $('<ul></ul>').addClass("listing")
+                    .append('<li>оценивание произведений текстового баттла (*доступно опытным участникам)</li>')
+                    .append('<li>оценивание произведений аудиобаттла (*доступно любому участнику)</li>')
+                    .append('<li>оценивание произведений битмейкер-баттла (*доступно любому участнику)</li>')
+                    .append(
+                        $('<li></li>').html(
+                            $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
+                                out_window_hide();
+                                showPaymentBox();
+                            })
+                        )
+                    )
+            );
+            $(inner_div).append(
+                $('<p></p>').append(
+                    '*по завершению раунда нераскрытые комментарии и оценки можно будет открыть за ту же стоимость в каталоге Ваших документов на главной странице баттла'
+                )
+            );
+
+            $("#out_window").show().focus();
+        }
+        else {
+            update_balance_string();
+            rtrn_values.rtrn_function();
+        }
+    });
+}
+
+function showNotEnoughMoneyNotification() {
+    $("#out_header_name").html("Недостаточно монет");
+    var inner_div = document.createElement("div");
+    $("#out_content").html(inner_div);
+    $(inner_div).append("<h5>Недостаточно монет для открытия комментария</h5>");
+    $(inner_div).append($('<div></div>').css({ "margin": "4px", "text-align": "center", "padding": "4px", "border": "1px solid #E7EAED", "border-radius": "2px" }).html('<span style="font-weight:bold">Монета</span> - универсальное средство обмена в приложении баттла'));
+    $(inner_div).append('<h5>Способы получения монет:</h5>');
+    $(inner_div).append(
+        $('<ul></ul>').addClass("listing")
+            .append('<li>оценить произведения любого из проводимых баттлов</li>')
+            .append(
+                $('<li></li>').html(
+                    $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
+                        out_window_hide();
+                        showPaymentBox();
+                    })
+                )
+            )
+    );
+    $(inner_div).append(
+        $('<p></p>').append(
+            '*по завершению раунда нераскрытые комментарии и оценки можно будет открыть за ту же стоимость в каталоге Ваших документов на главной странице баттла'
+        )
+    );
+
+    $("#out_window").show().focus();
+}
+
+function fill_audio_battle_rating() {
+    var battle_type = 'audio_battle';
+    get_round_result(0, battle_type, 0);
+    get_round_result(16, battle_type, audio_battle_number);
+    get_round_result(8, battle_type, audio_battle_number);
+    get_round_result(4, battle_type, audio_battle_number);
+    get_round_result(2, battle_type, audio_battle_number);
+    get_round_result(1, battle_type, audio_battle_number);
+    //  get_audio_battle_final_run();
+}
+
+function set_is_page_show(is_page_show) {
+    if (is_page_show !== null) {
+      $.ajax('{{conf.reqUrl}}/api/user-info', {
+        type: 'POST',
+        xhrFields: {
+          withCredentials: true
+        },
+        contentType: 'application/json;charset=utf-8',
+        data: JSON.stringify({
+          IsPageShow: is_page_show
+        })
+      }).done(function () {
+         $('#save_nick_msg').css('color', 'green').html('Ссылка на Вашу страницу ' + (is_page_show ? '' : 'не') + ' отображается в турнирной таблице').show().delay(2000).fadeOut('fast');
+      });
+    }
+}
+
+function showPaymentBox() {
+    //  popup_msg("Ошибка", "Пополнение монет через голоса временно не работает");
+    VK.callMethod('showOrderBox', { type: "votes", votes: "1" });
+}
+
+function text_work(in_text) {
+    in_text = in_text.replace(/<.*?>/g, '');
+    in_text = $.trim(in_text);
+    in_text = in_text.replace(/\r\n|\r|\n/g, '<br />');
+    var regCrLf = /(<br \/>){2,}/g;
+    in_text = in_text.replace(regCrLf, '<br />');
+    return in_text;
+}
+
+function save_text_current_battle() {
+    var flow_text = document.getElementById('flow_text').value;
+    flow_text = text_work(flow_text);
+
+    if (flow_text === '') {
+        event_msg_show('Необходимо указать текст для сохранения');
+        document.getElementById('flow_text').value = '';
+        $('#flow_text').focus();
+        return;
+    }
+
+    var max_string = 20;
+    if (flow_text.split('<br />').length > max_string) {
+        event_msg_show('Максимальное количество строк: ' + max_string);
+        document.getElementById('flow_text').value = flow_text.replace(/<br\s?\/?>/gi, "\n");
+        $('#flow_text').focus();
+        return;
+    }
+
+    var max_length = 1500;
+    if (flow_text.length > max_length) {
+        event_msg_show('Максимальное количество символов: ' + max_length);
+        document.getElementById('flow_text').value = flow_text.replace(/<br\s?\/?>/gi, "\n");
+        $('#flow_text').focus();
+        return;
+    }
+
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/temp-flow', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false,
+      data: JSON.stringify({
+        'FlowContent': encodeURIComponent(flow_text)
+      })
+    })
+    .done(function () {
+        $('#flow_text').attr('readonly', 'readonly');
+        text_battle_creation();
+    });
+}
+
+
+function text_battle_creation() {
+    $('#save_cancel').hide();
+    $('#leave_symbol').empty();
+    
+    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/current-item' , {
+      type: 'GET',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false
+    }).done(function (r) {
+        if (r.flow_text) {
+            // если есть текст, отображается 
+            $('textarea#flow_text').off().attr('readonly', 'readonly').css('border', '1px solid #ccf').val(r.flow_text);
+
+            if (r.d_send_text) {
+                // todo: для остальных типов баттлов тоже сделать публикацию на стену
+                //add_comments_to_block(r.id, document.getElementById("comments"), "text_battle", false, "rating_stars_block");
+            }
+            else {
+                // возможность редактировать и сдать на баттл
+                $('#send_text_div').show();
+                $('#flow_text_edit_link').show();
+            }
+        } else {
+            // отобразить пустое поле и кнопку - Save
+            text_edit_show();
+        }
+    });
+}
+
+function text_edit_show() {
+    $('#flow_text_edit_link').hide();
+    $('#send_text_div').hide();
+    $('textarea#flow_text').removeAttr('readonly').css('border', '1px solid #aaa').off().on('keyup', function () {
+        flow_symbol();
+    }).focus();
+    $('#save_cancel').show();
+}
+
+
+function get_voice_stat(battle_type) {
+    ajaxRequest("get_voice_stat", { round_id: btl_event.current_round_id }, {}).done(function (r) {
+        if (r) {
+            var sub_text;
+            if (parseInt(r.voice_pro_count, 10) + parseInt(r.voice_con_count, 10) <= -100) {
+                sub_text = '<span title="Исключен из участия в текущем раунде в связи с нарушением правил либо большим количеством отрицательных оценок">снят с участия</span>';
+            }
+            else {
+                sub_text = '<span style="font-weight:bold" title="голосов за/голосов против">+' + r.voice_pro_count + '/' + r.voice_con_count + '</span>';
+            }
+            $('#' + battle_type + '_voice_block').html(sub_text).show();
+        }
+    });
+}
+
+function timer(bt) {
+    var obj = document.getElementById(bt + '_timer_block');
+    obj.innerHTML--;
+
+    if ($('#' + bt + '_judging_block').is(':visible')) {
+        if (obj.innerHTML === '0') {
+            $(obj).hide();
+            $('#' + bt + '_send_golos').removeAttr('disabled');
+            setTimeout(function () { }, 1000);
+        }
+        else {
+            setTimeout(function () { timer(bt); }, 1000);
+        }
+    }
+    else {
+        setTimeout(function () { }, 1000);
+    }
+}
+
+function check_same_symbols(str) {
+    str = str.replace(/\s/g, '').toLowerCase();
+    for (var i = 0, max_i = str.length; i < max_i; i++) {
+        if (str[i] !== str[0]) {
+            if (str[i] !== str[1]) { //заведомо проверено на достаточное кол-во символов
+                return false; //если символ не совпадает с первым, тогда строка корректная (а также, если символ не совпадает со вторым по типу "лалала" или "оллло")
+            }
+        }
+    }
+    return true; //если все символы одинаковые в строке, тогда строка некорректная
+}
+
+function judge_send_two_comments(battle_type, json_cm) {
+    // отправляем запрос с оценкой на сервер
+    // отправляем коммент на сервер
+    var ocenka_msg = $('#' + battle_type + '_ocenka_msg');
+    ocenka_msg.empty();
+
+    // проверка на требуемые данные для 1 текста
+    if (!json_cm.flow_rating_theme_1 || !json_cm.flow_rating_general_1) {
+        ocenka_msg.html('*к первой записи не указаны оценки: ' + (json_cm.flow_rating_theme_1 ? '' : battle_types[battle_type].ocn.theme.oname) + ' ' + (json_cm.flow_rating_general_1 ? '' : battle_types[battle_type].ocn.general.oname));
+        return;
+    }
+    // проверка на требуемые данные для 2 текста
+    if (!json_cm.flow_rating_theme_2 || !json_cm.flow_rating_general_2) {
+        ocenka_msg.html('*ко второй записи не указаны оценки: ' + (json_cm.flow_rating_theme_2 ? '' : battle_types[battle_type].ocn.theme.oname) + ' ' + (json_cm.flow_rating_general_2 ? '' : battle_types[battle_type].ocn.general.oname));
+        return;
+    }
+
+    // проверка длины 1 комментария
+    if (json_cm.flow_comment1.length <= 5) {
+        ocenka_msg.html('*к первой записи не указан комментарий (более 5 символов)');
+        return;
+    }
+
+    // проверка длины 2 комментария
+    if (json_cm.flow_comment2.length <= 5) {
+        ocenka_msg.html('*ко второй записи не указан комментарий (более 5 символов)');
+        return;
+    }
+
+    // проверка длины 1 комментария
+    if (json_cm.flow_comment1.length > 800) {
+        ocenka_msg.html('*к первой записи длина комментария превысила максимальный размер: 800 символов');
+        return;
+    }
+
+    // проверка длины 2 комментария
+    if (json_cm.flow_comment2.length > 800) {
+        ocenka_msg.html('*ко второй записи длина комментария превысила максимальный размер: 800 символов');
+        return;
+    }
+
+    // корректность 1 комментария
+    if (check_same_symbols(json_cm.flow_comment1)) {
+        ocenka_msg.html('*к первой записи указан некорректный комментарий');
+        return;
+    }
+
+    // корректность 2 комментария
+    if (check_same_symbols(json_cm.flow_comment2)) {
+        ocenka_msg.html('*ко второй записи указан некорректный комментарий');
+        return;
+    }
+
+    var full_ocenka_1 = parseInt(json_cm.flow_rating_rhyme_1, 10) + parseInt(json_cm.flow_rating_theme_1, 10) + parseInt(json_cm.flow_rating_general_1, 10);
+    var full_ocenka_2 = parseInt(json_cm.flow_rating_rhyme_2, 10) + parseInt(json_cm.flow_rating_theme_2, 10) + parseInt(json_cm.flow_rating_general_2, 10);
+
+    if (full_ocenka_1 === full_ocenka_2) {
+        ocenka_msg.html('*сумма оценок совпадает - ничейный исход запрещён.');
+        return;
+    }
+    else if (full_ocenka_1 > full_ocenka_2) {
+        json_cm.voice_win = '1';
+    }
+    else if (full_ocenka_2 > full_ocenka_1) {
+        json_cm.voice_win = '-1';
+    }
+    else {
+        event_msg_show('Непредвиденная ошибка при оценивании. Попробуйте позже или обратитесь к администрации баттла.');
+        return;
+    }
+
+    json_cm.flow_comment1 = encodeURIComponent(json_cm.flow_comment1);
+    json_cm.flow_comment2 = encodeURIComponent(json_cm.flow_comment2);
+
+    $('#' + battle_type + '_send_golos').attr('disabled', 'disabled');
+    
+    $.ajax('{{conf.reqUrl}}/api/judge-evaluation', {
+      type: 'POST',
+      contentType: 'application/json;charset=utf-8',
+      xhrFields: {
+        withCredentials: true
+      },
+      cache: false,
+      data: JSON.stringify({
+        'JudgeEvaluation1': {
+          'IdOfMaterial': json_cm.flow_id1,
+          'Comment': json_cm.flow_comment1,
+          'RatingRhyme': json_cm.flow_rating_rhyme_1,
+          'RatingTheme': json_cm.flow_rating_theme_1,
+          'RatingGeneral': json_cm.flow_rating_general_1,
+          'IsCommentSign': json_cm.comment_sign_1
+        },
+        'JudgeEvaluation2': {
+          'IdOfMaterial': json_cm.flow_id2,
+          'Comment': json_cm.flow_comment2,
+          'RatingRhyme': json_cm.flow_rating_rhyme_2,
+          'RatingTheme': json_cm.flow_rating_theme_2,
+          'RatingGeneral': json_cm.flow_rating_general_2,
+          'IsCommentSign': json_cm.comment_sign_2
+        },
+        'IsFirstWinner': parseInt(json_cm.voice_win, 10) > 0
+      })
+    }).done(function (r) {
+        $('#' + battle_type + '_judging_block').hide();
+        update_balance_string();
+
+        var jr_rating = Number(r).toPrecision(3);
+        event_msg_show(
+            $('<div></div>').css({ "margin-bottom": "4px", "margin-top": "16px", "text-align": "center" }).append(
+                $('<span></span>').html('Получено <span style="font-weight: bold">' + (Math.round(r) * 2) + plural_number(r, ' монет', '', 'ы', '') + '</span>')
+            ),
+            $('<div></div>').css({ "padding-top": "5px", "text-align": "center" }).html(
+                $('<button/>').prop("type", "button").addClass("btn btn-primary").html("Оценить ещё").on("click", function () { battle_types[battle_type].menu_attr[1].menu_function(); })
+            ),
+            $('<div></div>').css({ "margin-top": "8px", "text-align": "center", }).html('Судейский рейтинг: <span style="font-weight:bold">' + jr_rating + '</span>'),
+            $('<div></div>').css({ "margin-top": "4px" }).html('Судейский рейтинг - среднее арифметическое от всех оценок ваших комментариев. Количество полученных монет за каждый оставленный комментарий соответствует округлённому значению вашего рейтинга.'),
+            $('<div></div>').css({ "margin-top": "8px" }).html("За каждую выставленную оценку (комментарий) вы можете дополнительно получить до 10 монет в зависимости от решения получателя комментария (исполнителя произведения). Чтобы посмотреть вознаграждения, кликните на ваш баланс (в правом верхнем углу)")
+        );
+        //                '<button onclick="' + battle_type + '_judging()">Оценить ещё</button>'
+        // '<p style="margin-top:4px">За каждую благодарность к Вашему комментарию дополнительно начисляется 5 монет (по окончании раунда)</p>',
+        //'<p>Жалобы на Ваши комментарии и оценки могут привести к блокировке судейства на неопределённый срок.</p>'
+        
+        function sendEvaluationNotification(tmpIdOfMaterial){
+          $.ajax('{{conf.reqUrl}}/api/material/' + tmpIdOfMaterial + '/evaluation-notification', {
+            type: 'GET',
+            cache: false,
+            xhrFields: {
+              withCredentials: true
+            }
+          });
+        }
+        
+        sendEvaluationNotification(json_cm.flow_id1);
+        
+        setTimeout(function () {
+            sendEvaluationNotification(json_cm.flow_id2);
+        }, 5000);
+    });
+}
+
+function vk_window_change(block_name) {
+    $("#vk_group_news").hide();
+    $("#vk_battle_chat").hide();
+    $("#beat_main_catalog").hide();
+    $("#" + block_name).show();
 }
 
 function get_date_from_json(in_data, no_need_time) {
@@ -365,10 +963,10 @@ function set_after_auth() {
 function get_track_from_wall() {
     var offset_number = getRandomInt(0, 45);
     VK.api('wall.get', { owner_id: -31568224, offset: offset_number, count: 1 }, function (r) {
-        if (!r.response) return;
-        if (!r.response[1]) return;
-        if (!r.response[1].attachment) return;
-        if (!r.response[1].attachment.audio) return;
+        if (!r.response) { return; }
+        if (!r.response[1]) { return; }
+        if (!r.response[1].attachment) { return; }
+        if (!r.response[1].attachment.audio) { return; }
 
         var rap_phrase = r.response[1].text.replace(/<br>/g, " ");
 
@@ -613,13 +1211,15 @@ function fill_div_beatmaker(inner_div_id) {
         $(inner_div).append(beat_li);
     }
 
+    function handleBeatAdding(x) {
+        return function () {
+            add_one_group_of_beats(x, inner_div_id);
+        };
+    }
+    
     var g_counter = 0;
     for (var g_key in beat_group_names) {
-        setTimeout(function (x) {
-            return function () {
-                add_one_group_of_beats(x, inner_div_id);
-            };
-        }(g_key), g_counter);
+        setTimeout(handleBeatAdding(g_key), g_counter);
         g_counter += 1000;
     }
 
@@ -946,7 +1546,7 @@ function show_choose_audio(aid, battle_type, owner_id, url, artist, title, durat
     }
 
     //тэги для бита
-    if (battle_type == "beat_battle") {
+    if (battle_type === 'beat_battle') {
         var pass_form_tags_div = document.createElement("div");
         $(pass_form_tags_div).addClass("bb_tag_list");
         for (var bb_key in bb_tags) {
@@ -1026,10 +1626,14 @@ function choose_album(battle_type) {
 }
 
 
-function add_audio_to_list(r, in_div, battle_type) {
-    var temp_str_for_track_name, t_div; //нулевые элементы, чтобы не пересоздавать в цикле
-    for (var track_key = 0, max_track_key = r.response.length; track_key < max_track_key; track_key++) {
-        t_div = document.createElement('div');
+function add_audio_to_list(r, in_div, battle_type) {    
+    function handleAddAudio(event) {
+        out_window_hide();
+        show_choose_audio(event.data.aid, battle_type, event.data.owner_id, event.data.url, event.data.artist, event.data.title, event.data.duration);
+    }
+    
+    for (var track_key = 0, max_track_key = r.response.length; track_key < max_track_key; track_key += 1) {
+        var t_div = document.createElement('div');
         $(t_div).addClass('radiobtn').on('click', {
             aid: r.response[track_key].aid,
             owner_id: r.response[track_key].owner_id,
@@ -1037,18 +1641,12 @@ function add_audio_to_list(r, in_div, battle_type) {
             artist: r.response[track_key].artist,
             title: r.response[track_key].title,
             duration: r.response[track_key].duration
-        }, function (event) {
-            out_window_hide();
-            show_choose_audio(event.data.aid, battle_type, event.data.owner_id, event.data.url, event.data.artist, event.data.title, event.data.duration);
-        });
+        }, handleAddAudio);
         //adding empty div element for radiobtn
         t_div.appendChild(document.createElement('div'));
 
-
-
         //adding text to choice radiobtn
-        temp_str_for_track_name = (r.response[track_key].artist + ' - ' + r.response[track_key].title);
-        //temp_str_for_track_name = (temp_str_for_track_name.length > 90) ? (temp_str_for_track_name.substring(0, 90) + '...') : temp_str_for_track_name;
+        var temp_str_for_track_name = (r.response[track_key].artist + ' - ' + r.response[track_key].title);
 
         $(t_div).append(
           $('<span></span>').addClass("ellipsis_title pull-left").css({ "width": "400px" }).html(temp_str_for_track_name).attr({ "title": temp_str_for_track_name })
@@ -1057,6 +1655,7 @@ function add_audio_to_list(r, in_div, battle_type) {
         $(t_div).append(
             $('<span></span>').addClass("pull-right").css({ "color": "#ccc" }).html(seconds_to_hms(r.response[track_key].duration))
         );
+        
         in_div.appendChild(t_div);
     }
 }
@@ -1090,7 +1689,7 @@ function choose_track(battle_type, album_id) {
         add_audio_to_list(audio_arr, inner_audio, battle_type);
 
         // если более или равно 30 аудио, включаем скролл, если нет, не включаем
-        if (audio_arr.response.length == scht.count_set) {
+        if (audio_arr.response.length === scht.count_set) {
             var uac = audio_arr.response.length;
             out_content_block.off('scroll').on('scroll', { uac: uac }, function (event) {
                 if (Math.abs($(inner_audio).offset().top) + out_content_block.height() + out_content_block.offset().top >= $(inner_audio).outerHeight() - 10) {
@@ -1217,328 +1816,6 @@ function audio_battle_rating() {
     //});
 }
 
-function fill_audio_battle_rating() {
-    var battle_type = 'audio_battle';
-    get_round_result(0, battle_type, 0);
-    get_round_result(16, battle_type, audio_battle_number);
-    get_round_result(8, battle_type, audio_battle_number);
-    get_round_result(4, battle_type, audio_battle_number);
-    get_round_result(2, battle_type, audio_battle_number);
-    get_round_result(1, battle_type, audio_battle_number);
-    //  get_audio_battle_final_run();
-}
-
-function set_is_page_show(is_page_show) {
-    if (is_page_show !== null) {
-      $.ajax('{{conf.reqUrl}}/api/user-info', {
-        type: 'POST',
-        xhrFields: {
-          withCredentials: true
-        },
-        contentType: 'application/json;charset=utf-8',
-        data: JSON.stringify({
-          IsPageShow: is_page_show
-        })
-      }).done(function () {
-         $('#save_nick_msg').css('color', 'green').html('Ссылка на Вашу страницу ' + (is_page_show ? '' : 'не') + ' отображается в турнирной таблице').show().delay(2000).fadeOut('fast');
-      });
-    }
-}
-
-function showPaymentBox() {
-    //  popup_msg("Ошибка", "Пополнение монет через голоса временно не работает");
-    VK.callMethod('showOrderBox', { type: "votes", votes: "1" });
-}
-
-function text_work(in_text) {
-    in_text = in_text.replace(/<.*?>/g, '');
-    in_text = $.trim(in_text);
-    in_text = in_text.replace(/\r\n|\r|\n/g, '<br />');
-    var regCrLf = /(<br \/>){2,}/g;
-    in_text = in_text.replace(regCrLf, '<br />');
-    return in_text;
-}
-
-
-function save_text_current_battle() {
-    var flow_text = document.getElementById('flow_text').value;
-    flow_text = text_work(flow_text);
-
-    if (flow_text === '') {
-        event_msg_show('Необходимо указать текст для сохранения');
-        document.getElementById('flow_text').value = '';
-        $('#flow_text').focus();
-        return;
-    }
-
-    var max_string = 20;
-    if (flow_text.split('<br />').length > max_string) {
-        event_msg_show('Максимальное количество строк: ' + max_string);
-        document.getElementById('flow_text').value = flow_text.replace(/<br\s?\/?>/gi, "\n");
-        $('#flow_text').focus();
-        return;
-    }
-
-    var max_length = 1500;
-    if (flow_text.length > max_length) {
-        event_msg_show('Максимальное количество символов: ' + max_length);
-        document.getElementById('flow_text').value = flow_text.replace(/<br\s?\/?>/gi, "\n");
-        $('#flow_text').focus();
-        return;
-    }
-
-    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/temp-flow', {
-      type: 'POST',
-      contentType: 'application/json;charset=utf-8',
-      xhrFields: {
-        withCredentials: true
-      },
-      cache: false,
-      data: JSON.stringify({
-        'FlowContent': encodeURIComponent(flow_text)
-      })
-    })
-    .done(function () {
-        $('#flow_text').attr('readonly', 'readonly');
-        text_battle_creation();
-    });
-};
-
-
-function text_battle_creation() {
-    $('#save_cancel').hide();
-    $('#leave_symbol').empty();
-    
-    $.ajax('{{conf.reqUrl}}/api/round/' + btl_event.current_round_id + '/current-item' , {
-      type: 'GET',
-      xhrFields: {
-        withCredentials: true
-      },
-      cache: false
-    }).done(function (r) {
-        if (r.flow_text) {
-            // если есть текст, отображается 
-            $('textarea#flow_text').off().attr('readonly', 'readonly').css('border', '1px solid #ccf').val(r.flow_text);
-
-            if (r.d_send_text) {
-                // todo: для остальных типов баттлов тоже сделать публикацию на стену
-                //add_comments_to_block(r.id, document.getElementById("comments"), "text_battle", false, "rating_stars_block");
-            }
-            else {
-                // возможность редактировать и сдать на баттл
-                $('#send_text_div').show();
-                $('#flow_text_edit_link').show();
-            }
-        } else {
-            // отобразить пустое поле и кнопку - Save
-            text_edit_show();
-        }
-    });
-}
-
-function text_edit_show() {
-    $('#flow_text_edit_link').hide();
-    $('#send_text_div').hide();
-    $('textarea#flow_text').removeAttr('readonly').css('border', '1px solid #aaa').off().on('keyup', function () {
-        flow_symbol();
-    }).focus();
-    $('#save_cancel').show();
-}
-
-
-function get_voice_stat(battle_type) {
-    ajaxRequest("get_voice_stat", { round_id: btl_event.current_round_id }, {}).done(function (r) {
-        if (r) {
-            var sub_text;
-            if (parseInt(r.voice_pro_count) + parseInt(r.voice_con_count) <= -100) {
-                sub_text = '<span title="Исключен из участия в текущем раунде в связи с нарушением правил либо большим количеством отрицательных оценок">снят с участия</span>';
-            }
-            else {
-                sub_text = '<span style="font-weight:bold" title="голосов за/голосов против">+' + r.voice_pro_count + '/' + r.voice_con_count + '</span>';
-            }
-            $('#' + battle_type + '_voice_block').html(sub_text).show();
-        }
-    });
-}
-
-function timer(bt) {
-    var obj = document.getElementById(bt + '_timer_block');
-    obj.innerHTML--;
-
-    if ($('#' + bt + '_judging_block').is(':visible')) {
-        if (obj.innerHTML === '0') {
-            $(obj).hide();
-            $('#' + bt + '_send_golos').removeAttr('disabled');
-            setTimeout(function () { }, 1000);
-        }
-        else {
-            setTimeout(function () { timer(bt); }, 1000);
-        }
-    }
-    else {
-        setTimeout(function () { }, 1000);
-    }
-}
-
-function check_same_symbols(str) {
-    str = str.replace(/\s/g, '').toLowerCase();
-    for (var i = 0, max_i = str.length; i < max_i; i++) {
-        if (str[i] !== str[0]) {
-            if (str[i] !== str[1]) { //заведомо проверено на достаточное кол-во символов
-                return false; //если символ не совпадает с первым, тогда строка корректная (а также, если символ не совпадает со вторым по типу "лалала" или "оллло")
-            }
-        }
-    }
-    return true; //если все символы одинаковые в строке, тогда строка некорректная
-}
-
-function judge_send_two_comments(battle_type, json_cm) {
-    // отправляем запрос с оценкой на сервер
-    // отправляем коммент на сервер
-    var ocenka_msg = $('#' + battle_type + '_ocenka_msg');
-    ocenka_msg.empty();
-
-    // проверка на требуемые данные для 1 текста
-    if (!json_cm.flow_rating_theme_1 || !json_cm.flow_rating_general_1) {
-        ocenka_msg.html('*к первой записи не указаны оценки: ' + (json_cm.flow_rating_theme_1 ? '' : battle_types[battle_type].ocn.theme.oname) + ' ' + (json_cm.flow_rating_general_1 ? '' : battle_types[battle_type].ocn.general.oname));
-        return;
-    }
-    // проверка на требуемые данные для 2 текста
-    if (!json_cm.flow_rating_theme_2 || !json_cm.flow_rating_general_2) {
-        ocenka_msg.html('*ко второй записи не указаны оценки: ' + (json_cm.flow_rating_theme_2 ? '' : battle_types[battle_type].ocn.theme.oname) + ' ' + (json_cm.flow_rating_general_2 ? '' : battle_types[battle_type].ocn.general.oname));
-        return;
-    }
-
-    // проверка длины 1 комментария
-    if (json_cm.flow_comment1.length <= 5) {
-        ocenka_msg.html('*к первой записи не указан комментарий (более 5 символов)');
-        return;
-    }
-
-    // проверка длины 2 комментария
-    if (json_cm.flow_comment2.length <= 5) {
-        ocenka_msg.html('*ко второй записи не указан комментарий (более 5 символов)');
-        return;
-    }
-
-    // проверка длины 1 комментария
-    if (json_cm.flow_comment1.length > 800) {
-        ocenka_msg.html('*к первой записи длина комментария превысила максимальный размер: 800 символов');
-        return;
-    }
-
-    // проверка длины 2 комментария
-    if (json_cm.flow_comment2.length > 800) {
-        ocenka_msg.html('*ко второй записи длина комментария превысила максимальный размер: 800 символов');
-        return;
-    }
-
-    // корректность 1 комментария
-    if (check_same_symbols(json_cm.flow_comment1)) {
-        ocenka_msg.html('*к первой записи указан некорректный комментарий');
-        return;
-    }
-
-    // корректность 2 комментария
-    if (check_same_symbols(json_cm.flow_comment2)) {
-        ocenka_msg.html('*ко второй записи указан некорректный комментарий');
-        return;
-    }
-
-    var full_ocenka_1 = parseInt(json_cm.flow_rating_rhyme_1) + parseInt(json_cm.flow_rating_theme_1) + parseInt(json_cm.flow_rating_general_1);
-    var full_ocenka_2 = parseInt(json_cm.flow_rating_rhyme_2) + parseInt(json_cm.flow_rating_theme_2) + parseInt(json_cm.flow_rating_general_2);
-
-    if (full_ocenka_1 === full_ocenka_2) {
-        ocenka_msg.html('*сумма оценок совпадает - ничейный исход запрещён.');
-        return;
-    }
-    else if (full_ocenka_1 > full_ocenka_2) {
-        json_cm.voice_win = '1';
-    }
-    else if (full_ocenka_2 > full_ocenka_1) {
-        json_cm.voice_win = '-1';
-    }
-    else {
-        event_msg_show('Непредвиденная ошибка при оценивании. Попробуйте позже или обратитесь к администрации баттла.');
-        return;
-    }
-
-    json_cm.flow_comment1 = encodeURIComponent(json_cm.flow_comment1);
-    json_cm.flow_comment2 = encodeURIComponent(json_cm.flow_comment2);
-
-    $('#' + battle_type + '_send_golos').attr('disabled', 'disabled');
-    
-    $.ajax('{{conf.reqUrl}}/api/judge-evaluation', {
-      type: 'POST',
-      contentType: 'application/json;charset=utf-8',
-      xhrFields: {
-        withCredentials: true
-      },
-      cache: false,
-      data: JSON.stringify({
-        'JudgeEvaluation1': {
-          'IdOfMaterial': json_cm.flow_id1,
-          'Comment': json_cm.flow_comment1,
-          'RatingRhyme': json_cm.flow_rating_rhyme_1,
-          'RatingTheme': json_cm.flow_rating_theme_1,
-          'RatingGeneral': json_cm.flow_rating_general_1,
-          'IsCommentSign': json_cm.comment_sign_1
-        },
-        'JudgeEvaluation2': {
-          'IdOfMaterial': json_cm.flow_id2,
-          'Comment': json_cm.flow_comment2,
-          'RatingRhyme': json_cm.flow_rating_rhyme_2,
-          'RatingTheme': json_cm.flow_rating_theme_2,
-          'RatingGeneral': json_cm.flow_rating_general_2,
-          'IsCommentSign': json_cm.comment_sign_2
-        },
-        'IsFirstWinner': parseInt(json_cm.voice_win) > 0
-      })
-    }).done(function (r) {
-        $('#' + battle_type + '_judging_block').hide();
-        update_balance_string();
-
-        var jr_rating = Number(r).toPrecision(3);
-        event_msg_show(
-            $('<div></div>').css({ "margin-bottom": "4px", "margin-top": "16px", "text-align": "center" }).append(
-                $('<span></span>').html('Получено <span style="font-weight: bold">' + (Math.round(r) * 2) + plural_number(r, ' монет', '', 'ы', '') + '</span>')
-            ),
-            $('<div></div>').css({ "padding-top": "5px", "text-align": "center" }).html(
-                $('<button/>').prop("type", "button").addClass("btn btn-primary").html("Оценить ещё").on("click", function () { battle_types[battle_type].menu_attr[1].menu_function(); })
-            ),
-            $('<div></div>').css({ "margin-top": "8px", "text-align": "center", }).html('Судейский рейтинг: <span style="font-weight:bold">' + jr_rating + '</span>'),
-            $('<div></div>').css({ "margin-top": "4px" }).html('Судейский рейтинг - среднее арифметическое от всех оценок ваших комментариев. Количество полученных монет за каждый оставленный комментарий соответствует округлённому значению вашего рейтинга.'),
-            $('<div></div>').css({ "margin-top": "8px" }).html("За каждую выставленную оценку (комментарий) вы можете дополнительно получить до 10 монет в зависимости от решения получателя комментария (исполнителя произведения). Чтобы посмотреть вознаграждения, кликните на ваш баланс (в правом верхнем углу)")
-        );
-        //                '<button onclick="' + battle_type + '_judging()">Оценить ещё</button>'
-        // '<p style="margin-top:4px">За каждую благодарность к Вашему комментарию дополнительно начисляется 5 монет (по окончании раунда)</p>',
-        //'<p>Жалобы на Ваши комментарии и оценки могут привести к блокировке судейства на неопределённый срок.</p>'
-        
-        function sendEvaluationNotification(tmpIdOfMaterial){
-          $.ajax('{{conf.reqUrl}}/api/material/' + tmpIdOfMaterial + '/evaluation-notification', {
-            type: 'GET',
-            cache: false,
-            xhrFields: {
-              withCredentials: true
-            }
-          });
-        }
-        
-        sendEvaluationNotification(json_cm.flow_id1);
-        
-        setTimeout(function () {
-            sendEvaluationNotification(json_cm.flow_id2);
-        }, 5000);
-    });
-};
-
-function vk_window_change(block_name) {
-    $("#vk_group_news").hide();
-    $("#vk_battle_chat").hide();
-    $("#beat_main_catalog").hide();
-    $("#" + block_name).show();
-}
-
 var MaterialDto = function (item) {
     var self = this;
     self.id = item.id;
@@ -1550,283 +1827,7 @@ var MaterialDto = function (item) {
     self.mdesc = item.mdesc;
 };
 
-function generate_judging_texts(bt, is_alternative) {
-    $('#event_msg_block').empty().hide();
-    document.getElementById(bt + '_judging_comment_1').value = '';
-    document.getElementById(bt + '_judging_comment_2').value = '';
-    //обнуление всех элементов
-    $('#' + bt + '_comment_sign_1').removeAttr('checked');
-    $('#' + bt + '_comment_sign_2').removeAttr('checked');
-    $('#' + bt + '_judging_block').hide();
-    $('#' + bt + '_send_golos').attr('disabled', 'disabled');
-    $('#' + bt + '_itog_rating_1').html(0).css('background-color', '#5E80A5');
-    $('#' + bt + '_itog_rating_2').html(0).css('background-color', '#5E80A5');
-    $('#' + bt + '_ocenka_msg').empty();
-
-    $.ajax('{{conf.reqUrl}}/api/material?round_id=' + btl_event.current_round_id + '&is_alternative=' + is_alternative, {
-      type: 'GET',
-      xhrFields: {
-        withCredentials: true
-      },
-      cache: false
-    }).done(function (r) {
-            if (r.length < 2) {
-                event_msg_show('Недостаточно произведений для оценивания');
-                return;
-            }
-
-            var mt1 = new MaterialDto(r[0]);
-            var mt2 = new MaterialDto(r[1]);
-
-            var json_array_div1 = {};
-            var json_array_div2 = {};
-
-            $('#' + bt + '_rating_stars_1').html(get_star_rating_string(bt, 1, json_array_div1));
-            $('#' + bt + '_rating_stars_2').html(get_star_rating_string(bt, 2, json_array_div2));
-
-            $('#' + bt + '_claim_1').off('click').on('click', { flow_id: mt1.id }, function (event) {
-                send_claim(event.data.flow_id);
-            });
-            $('#' + bt + '_claim_2').off('click').on('click', { flow_id: mt2.id }, function (event) {
-                send_claim(event.data.flow_id);
-            });
-
-            if (bt === 'audio_battle' || bt == 'beat_battle') {
-                $('#' + bt + '_judging_player_1_run').off('click').on('click', { aid: mt1.mcontent, player_number: 1, battle_type: bt }, function (event) {
-                    play_audio_judging(event.data.aid, event.data.player_number, event.data.battle_type);
-                }).show();
-                $('#' + bt + '_judging_player_2_run').off('click').on('click', { aid: mt2.mcontent, player_number: 2, battle_type: bt }, function (event) {
-                    play_audio_judging(event.data.aid, event.data.player_number, event.data.battle_type);
-                }).show();
-            }
-            else if (bt === "text_battle") {
-                $('#flow_text_ready_1').html(mt1.mcontent);
-                $('#text_battle_j_header_1').html(mt1.mname);
-
-                $('#flow_text_ready_2').html(mt2.mcontent);
-                $('#text_battle_j_header_2').html(mt2.mname);
-            };
-
-
-            $('#' + bt + '_timer_block').html('59').show();
-            setTimeout(function () { }, 1000);
-            setTimeout(function () {
-                timer(bt);
-            }, 1000);
-
-
-            $('#' + bt + '_send_golos').off('click').on('click', function () {
-                judge_send_two_comments(bt, {
-                    flow_id1: mt1.id,
-                    flow_id2: mt2.id,
-                    flow_comment1: text_work(document.getElementById(bt + '_judging_comment_1').value),
-                    flow_comment2: text_work(document.getElementById(bt + '_judging_comment_2').value),
-                    flow_rating_rhyme_1: $(json_array_div1.rhyme).rateit("value"),
-                    flow_rating_rhyme_2: $(json_array_div2.rhyme).rateit("value"),
-                    flow_rating_theme_1: $(json_array_div1.theme).rateit("value"),
-                    flow_rating_theme_2: $(json_array_div2.theme).rateit("value"),
-                    flow_rating_general_1: $(json_array_div1.general).rateit("value"),
-                    flow_rating_general_2: $(json_array_div2.general).rateit("value"),
-                    comment_sign_1: $('#' + bt + '_comment_sign_1').is(':checked'),
-                    comment_sign_2: $('#' + bt + '_comment_sign_2').is(':checked'),
-                    voice_win: null
-                });
-            });
-            $('#' + bt + '_judging_block').show();
-            //judging_procent(bt);
-        });
-}
-
 var claim_punkt = ["Нарушение авторских прав (плагиат)", "Угроза, клевета, оскорбление", "Неадекватное содержание произведения", "Другое"];
-
-function send_claim(flow_id) {
-    $('#out_window').show().focus();
-    $('#out_header_name').html('Заявка о нарушение правил');
-    $('#out_content').html('<h5>Укажите пункт нарушения правил</h5>');
-    for (var key = 0, max_key = claim_punkt.length; key < max_key; key++) {
-        var claim_type_div = document.createElement('div');
-        $(claim_type_div).addClass("radiobtn").on("click", { claim: claim_punkt[key], flow_id: flow_id }, function (event) {
-            $.ajax('{{conf.reqUrl}}/api/log-record', {
-              type: 'POST',
-              contentType: 'application/json;charset=utf-8',
-              data: JSON.stringify({
-                LogSubject: 'MaterialClaim',
-                LogBody: 'Claim: ' + event.data.claim + '; Material: ' + event.data.flow_id
-              })
-            });
-           
-            out_window_hide();
-        });
-        claim_type_div.appendChild(document.createElement('div'));
-        claim_type_div.appendChild(document.createTextNode(claim_punkt[key]));
-        $('#out_content').append(claim_type_div);
-    }
-    $('#out_content').append('<p>При выборе варианта "Другое" по возможности свяжитесь с администрацией баттла и укажите причину</p><p>Заявка о нарушении правил рассматривается некоторое время, поэтому можно продолжать оценивать далее произведения, соответственно занижая оценки произведениям, нарушающим правила. После рассмотрения заявки о нарушении, администрация баттла по своему усмотрению решает вопрос о снятии произведения с дальнейшего участия в баттле</p>');
-}
-
-function text_battle_judging(is_alternative_in) {
-    var is_alternative = (is_alternative_in) ? true : false;
-    generate_judging_texts('text_battle', is_alternative);
-}
-
-
-function send_text_to_battle() {
-    // $('#send_text_to_battle_button').attr('disabled', 'disabled');
-    var count_value = $('textarea#flow_text').val().length;
-    var enter_value = $('textarea#flow_text').val().split('\n').length;
-    var min_length = 300;
-    var min_string = 12;
-
-    if (count_value < min_length || enter_value < min_string) {
-        event_msg_show('Минимальное количество строк для участия в баттле: ' + min_string + ' (' + min_length + ' символов)');
-        $('textarea#flow_text').focus();
-        $('#send_text_to_battle_button').removeAttr('disabled', 'disabled');
-        return;
-    }
-
-    var json_data = {
-        round_id: btl_event.current_round_id,
-        flow_text: ''
-    };
-
-    $.ajax('{{conf.reqUrl}}/api/round/' + json_data.round_id + '/material-flow', {
-      type: 'POST',
-      contentType: 'application/json;charset=utf-8',
-      cache: false,
-      xhrFields: {
-        withCredentials: true
-      },
-      data: JSON.stringify({
-        'FlowContent': json_data.flow_text
-      })
-    }).done(function () {
-        text_battle_creation();
-        var subs_div = document.createElement("div");
-        popup_msg("Текст успешно сдан на баттл. Оценки и комментарии будут публиковаться под текстом по ходу оценивания.", subs_div);
-
-        btlApp.viewModel.selectedBattleSeason().currentBattleRound().getAuthUserRoundMaterial();
-
-        VK.api("getUserSettings", function (gus) {
-            if ((gus.response & 1) !== 1) {
-                var subs_cmnt_in = document.createElement("span");
-                subs_cmnt_in.appendChild(document.createTextNode("Разрешить приложению присылать уведомления (о новых оценках, комментариях, запуске новых раундов)"));
-                $(subs_cmnt_in).on('click', function () {
-                    VK.callMethod("showSettingsBox", 1);
-                }).addClass("link_view");
-                subs_div.appendChild(subs_cmnt_in);
-            }
-        });
-
-    }).always(function () {
-        $('#send_text_to_battle_button').removeAttr('disabled', 'disabled');
-    });
-}
-
-function get_rival_flow(comment_id, battle_type) {
-    $.ajax('{{conf.reqUrl}}/api/bout-unit/' + comment_id + '/material-content/rival', {
-      type: 'GET',
-      xhrFields: {
-          withCredentials: true
-      },
-      cache: true
-    }).done(function (r) {
-        var oc = $("#flow_content");
-        oc.empty();
-        if (battle_type === "text_battle") {
-            oc.html('<p>' + r + '</p>');
-        }
-        else {
-            var outer_player_div = document.createElement('div');
-            $(outer_player_div).css({ 'border': '1px solid #E7EAED', 'padding': '4px' });
-            var player_div = document.createElement('div');
-            $(player_div).addClass('right_arrow_wrap').attr('title', 'Прослушать аудиозапись');
-            var inner_player_div = document.createElement('div');
-            $(inner_player_div).addClass('right_arrow');
-            player_div.appendChild(inner_player_div);
-            outer_player_div.appendChild(player_div);
-            $(player_div).on('click', function () {
-                play_file_jquery({ gid: battle_types[battle_type].battle_group_id, aids: r }, null, null);
-            });
-            oc.html(outer_player_div);
-        }
-        $('#flow_header_name').html("Соперник");
-        $('#flow_window').show().focus();
-    }).fail(function(){
-      event_msg_show('Соперник снят с участия за нарушение правил баттла');
-    });
-}
-
-function open_bout_unit(bout_unit_id, rtrn_values) {
-    $.ajax('{{conf.reqUrl}}/api/boutunit/' + bout_unit_id, {
-      type: 'POST',
-      xhrFields: {
-        withCredentials: true
-      },
-      cache: false
-    }).done(function (r) {
-        if (r === false) {
-            $("#out_header_name").html("Недостаточно монет");
-            var inner_div = document.createElement("div");
-            $("#out_content").html(inner_div);
-            $(inner_div).append("<h5>Недостаточно монет для открытия комментария</h5>");
-            $(inner_div).append($('<div></div>').css({ "margin": "4px", "text-align": "center", "padding": "4px", "border": "1px solid #E7EAED", "border-radius": "2px" }).html('<span style="font-weight:bold">Монета</span> - универсальное средство обмена в приложении баттла'));
-            $(inner_div).append('<h5>Способы получения монет:</h5>');
-            $(inner_div).append(
-                $('<ul></ul>').addClass("listing")
-                    .append('<li>оценивание произведений текстового баттла (*доступно опытным участникам)</li>')
-                    .append('<li>оценивание произведений аудиобаттла (*доступно любому участнику)</li>')
-                    .append('<li>оценивание произведений битмейкер-баттла (*доступно любому участнику)</li>')
-                    .append(
-                        $('<li></li>').html(
-                            $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
-                                out_window_hide();
-                                showPaymentBox();
-                            })
-                        )
-                    )
-            );
-            $(inner_div).append(
-                $('<p></p>').append(
-                    '*по завершению раунда нераскрытые комментарии и оценки можно будет открыть за ту же стоимость в каталоге Ваших документов на главной странице баттла'
-                )
-            );
-
-            $("#out_window").show().focus();
-        }
-        else {
-            update_balance_string();
-            rtrn_values.rtrn_function();
-        }
-    });
-}
-
-function showNotEnoughMoneyNotification() {
-    $("#out_header_name").html("Недостаточно монет");
-    var inner_div = document.createElement("div");
-    $("#out_content").html(inner_div);
-    $(inner_div).append("<h5>Недостаточно монет для открытия комментария</h5>");
-    $(inner_div).append($('<div></div>').css({ "margin": "4px", "text-align": "center", "padding": "4px", "border": "1px solid #E7EAED", "border-radius": "2px" }).html('<span style="font-weight:bold">Монета</span> - универсальное средство обмена в приложении баттла'));
-    $(inner_div).append('<h5>Способы получения монет:</h5>');
-    $(inner_div).append(
-        $('<ul></ul>').addClass("listing")
-            .append('<li>оценить произведения любого из проводимых баттлов</li>')
-            .append(
-                $('<li></li>').html(
-                    $('<span></span>').addClass("link_view").html("приобрести 100 монет за 1 голос").on("click", function () {
-                        out_window_hide();
-                        showPaymentBox();
-                    })
-                )
-            )
-    );
-    $(inner_div).append(
-        $('<p></p>').append(
-            '*по завершению раунда нераскрытые комментарии и оценки можно будет открыть за ту же стоимость в каталоге Ваших документов на главной странице баттла'
-        )
-    );
-
-    $("#out_window").show().focus();
-}
 
 var complain_thanks = {
     cmpls: {
@@ -1961,7 +1962,7 @@ function fill_rating_table(rd, battle_type, out_block) {
                 user_link_a.target = '_blank';
                 name_link_div.appendChild(user_link_a);
             }
-            var showing_name = (battle_type == "beat_battle") ? rd[key].beatmaker_name : rd[key].nick_name;
+            var showing_name = (battle_type === 'beat_battle') ? rd[key].beatmaker_name : rd[key].nick_name;
             var name_link_a = document.createElement('span');
 
             $(name_link_a).on('click', { flow_id: rd[key].flow_id, user_link: rd[key].user_link, user_name: showing_name, battle_type: battle_type }, function (event) {
@@ -2059,7 +2060,7 @@ function get_flow(material_id, user_link, user_name, material_title, battle_type
                      var mcontent_json = {
                          aids: mcontent_array[1]
                      };
-                     if (parseInt(mcontent_array[0]) < 0) {
+                     if (parseInt(mcontent_array[0], 10) < 0) {
                          mcontent_json.gid = -parseInt(mcontent_array[0], 10);
                      }
                      else {
@@ -2231,7 +2232,7 @@ function add_comments_to_block(material_id, need_div, battle_type, is_shared, st
                 }
             }
             else {
-                if (is_shared == true) {
+                if (is_shared === true) {
                     //для всех закрытых комментариев общего назначения
                     $(cmnt_text).html("Оценка и комментарий скрыты").css({ "color": "#777" });
                 }
@@ -2255,7 +2256,7 @@ function add_comments_to_block(material_id, need_div, battle_type, is_shared, st
                 var plus_or_minus = '0';
                 if (r[key].IsWin != null) {
                     plus_or_minus = (r[key].IsWin ? '+' : '-');
-                };
+                }
 
                 $(cdiv).append(
                     $('<div></div>').addClass("pull-left").css({
@@ -2345,9 +2346,11 @@ function get_star_rating_const_string(battle_type, json_rtg) {
 
 function get_star_rating_string(battle_type, block_number, json_array_div) {
     var is_tech_uch = true;
-    if (battle_type == "text_battle") {
+    
+    if (battle_type === 'text_battle') {
         is_tech_uch = ((battle_types[battle_type].top_users).indexOf(get_part_url('viewer_id')) != '-1') ? true : false; //является ли пользователь опытным в своём типе баттла
     }
+    
     var star_div = document.createElement("div");
 
     for (var json_key in battle_types[battle_type].ocn) {
@@ -2373,7 +2376,7 @@ function get_star_rating_string(battle_type, block_number, json_array_div) {
         }).on('rated reset', function (event, value) {
             var total_sum = 0;
             for (var rated_key in battle_types[battle_type].ocn) {
-                total_sum += parseInt($(json_array_div[rated_key]).rateit("value"));
+                total_sum += parseInt($(json_array_div[rated_key]).rateit('value'), 10);
             }
             $('#' + battle_type + '_itog_rating_' + block_number).html(total_sum);
         });
@@ -2420,10 +2423,10 @@ function get_otbor_round_table(round_chislo, battle_type, battle_number) {
             $('#out_content').html(inner_div);
             $('#out_window').show().focus();
 
-            if (battle_type == "text_battle" && status_arr[round_chislo * 2].is_top == true) {
+            if (battle_type === 'text_battle' && status_arr[round_chislo * 2].is_top == true) {
                 fill_rating_table_top(r, battle_type, inner_div);
             }
-            else if (battle_type == "audio_battle" && (round_chislo == 2 || round_chislo == 1)) {
+            else if (battle_type === 'audio_battle' && (round_chislo == 2 || round_chislo == 1)) {
                 fill_rating_table_top(r, battle_type, inner_div);
             }
             else {
@@ -2447,7 +2450,7 @@ function fill_rating_table_top(rd, battle_type, out_block) {
 
         var nick_span = document.createElement('span');
 
-        var user_name = ((battle_type == "beat_battle") ? rd[key].beatmaker_name : rd[key].nick_name);
+        var user_name = ((battle_type === 'beat_battle') ? rd[key].beatmaker_name : rd[key].nick_name);
 
         $(nick_span).html(user_name || '???')
             .addClass('link_view')
@@ -2488,8 +2491,14 @@ function fill_rating_table_top(rd, battle_type, out_block) {
     }
 }
 
+function handleRoundClick(event) {
+    get_flow(event.data.flow_id, event.data.user_link, event.data.user_name, '', event.data.battle_type);
+}
 
 function get_round_result(round_chislo, battle_type, battle_number) {
+    // Make a number instead a possible string
+    round_chislo = +round_chislo;
+
     $.ajax('{{conf.reqUrl}}/api/round-result', {
       type: 'GET',
       // Url params
@@ -2502,8 +2511,8 @@ function get_round_result(round_chislo, battle_type, battle_number) {
       cache: true
     }).done(function (r) {
         ////if (r && r.length > 0) {
-        if (battle_type == "text_battle" && round_chislo == 1) {
-            for (var w_key = 0; w_key <= 1; w_key++) {
+        if (battle_type === 'text_battle' && round_chislo === 1) {
+            for (var w_key = 0; w_key <= 1; w_key += 1) {
                 if (r[w_key]) {
                     var winner_span = document.createElement('span');
                     $(winner_span).addClass('link_view')
@@ -2537,43 +2546,44 @@ function get_round_result(round_chislo, battle_type, battle_number) {
         for (var key = 0, max_key = r.length; key < max_key; key++) {
 
             var a_element = document.createElement("span");
-            var showing_name = (battle_type == "beat_battle") ? r[key].beatmaker_name : r[key].nick_name;
+            var showing_name = (battle_type === 'beat_battle') ? r[key].beatmaker_name : r[key].nick_name;
             var content_text = document.createTextNode(showing_name || '???');
             var span_content_text = document.createElement("span");
             $(span_content_text).addClass("link_view");
             span_content_text.appendChild(content_text);
 
-            if (battle_type == "text_battle" && status_arr[round_chislo * 2].is_top == true) {
+            if (battle_type === 'text_battle' && status_arr[round_chislo * 2].is_top == true) {
                 var ocenka_top_user_total = parseFloat(r[key].rating_theme_ave) + parseFloat(r[key].rating_rhyme_ave) + parseFloat(r[key].rating_general_ave);
-                span_content_text.setAttribute('title', ocenka_top_user_total + ' + (' + r[key].voice_pro_count + ' ' + r[key].voice_con_count + ')/10 = ' + (parseFloat(ocenka_top_user_total) + parseFloat((parseInt(r[key].voice_pro_count) + parseInt(r[key].voice_con_count)) / 10)).toFixed(2));
+                span_content_text.setAttribute('title', ocenka_top_user_total + ' + (' + r[key].voice_pro_count + ' ' + r[key].voice_con_count + ')/10 = ' + (parseFloat(ocenka_top_user_total) + parseFloat((parseInt(r[key].voice_pro_count, 10) + parseInt(r[key].voice_con_count, 10)) / 10)).toFixed(2));
             }
             else {
                 span_content_text.setAttribute('title', r[key].voice_pro_count + ' ' + r[key].voice_con_count + ' = ' + (r[key].voice_pro_count + r[key].voice_con_count));
             }
 
-            if (battle_type == "text_battle") {
+            if (battle_type === 'text_battle') {
                 if (key < round_chislo) {
-                    if (user_author.nick_name.value && (user_author.nick_name.value == r[key].nick_name)) {
+                    if (user_author.nick_name.value && (user_author.nick_name.value === r[key].nick_name)) {
                         $('#sign_1_' + round_chislo).addClass('itog_plus').attr('title', 'Участник "' + user_author.nick_name.value + '" - прошедший в ' + status_arr[round_chislo].sname);
 
-                        user_statuses.text_battle_uch_status = ((user_statuses.text_battle_uch_status == null) ? round_chislo : (parseInt(user_statuses.text_battle_uch_status) + parseInt(round_chislo)));
+                        user_statuses.text_battle_uch_status = ((user_statuses.text_battle_uch_status == null) ? round_chislo : (parseInt(user_statuses.text_battle_uch_status, 10) + parseInt(round_chislo, 10)));
                         if (user_statuses.text_battle_status_max > round_chislo) {
                             user_statuses.text_battle_status_max = round_chislo;
                             $('#text_battle_rating_status').html('Статус в турнире: <b>' + status_arr[round_chislo].sname + '</b>');
-                        };
+                        }
+                        
                         $('#rm_' + round_chislo).addClass('backlight');
                     }
                 }
                 else if (key >= round_chislo) {
                     span_content_text.style.color = '#bbb';
-                    if (user_author.nick_name.value && (user_author.nick_name.value == r[key].nick_name)) {
+                    if (user_author.nick_name.value && (user_author.nick_name.value === r[key].nick_name)) {
                         $('#sign_1_' + round_chislo).addClass('itog_minus').attr('title', 'Участник "' + user_author.nick_name.value + '" - непрошедший в ' + status_arr[round_chislo].sname + ' (участие в баттле можно продолжить с раунда, указанного в статусе турнира выше)');
                     }
                 }
             }
-            else if (battle_type == "audio_battle" || battle_type == "beat_battle") {
+            else if (battle_type === 'audio_battle' || battle_type === 'beat_battle') {
                 if (round_chislo > 0) {
-                    if (round_chislo == 16 && battle_type == "audio_battle") {
+                    if (round_chislo === 16 && battle_type === 'audio_battle') {
                         if (key >= 20) {
                             span_content_text.style.color = '#bbb';
                         }
@@ -2584,13 +2594,11 @@ function get_round_result(round_chislo, battle_type, battle_number) {
                 }
             }
 
-            var number_text = document.createTextNode((parseInt(key) + 1) + '. ');
+            var number_text = document.createTextNode((parseInt(key, 10) + 1) + '. ');
             a_element.appendChild(number_text);
             a_element.appendChild(span_content_text);
 
-            $(a_element).on('click', { flow_id: r[key].flow_id, user_link: r[key].user_link, user_name: showing_name, battle_type: battle_type }, function (event) {
-                get_flow(event.data.flow_id, event.data.user_link, event.data.user_name, "", event.data.battle_type);
-            });
+            $(a_element).on('click', { flow_id: r[key].flow_id, user_link: r[key].user_link, user_name: showing_name, battle_type: battle_type }, handleRoundClick);
 
             var div_elem = document.createElement('div');
             div_elem.style.padding = "1px";
@@ -2650,7 +2658,9 @@ function get_text_battle_uch_status() {
 
     $(inner_div).append(
         $('<div></div>').css({ "text-align": "center", "margin-top": "4px" }).html(
-            $('<span></span>').addClass("link_view").html("опубликовать на стене").on("click", function () { wall_post(t_msg) })
+            $('<span></span>').addClass('link_view').html('опубликовать на стене').on('click', function () { 
+              wall_post(t_msg);
+            })
         )
     );
 }
@@ -2677,7 +2687,7 @@ function show_settings(in_str) {
         $(uname_div).css({ 'margin-top': '5px' });
         $(uname_div).append('<label>' + user_author[uname].label + ': </label>');
 
-        if (uname == "biography") {
+        if (uname === 'biography') {
             var uname_textarea = document.createElement("textarea");
             uname_textarea.id = uname + '_in';
             $(uname_textarea).css({ "width": "100%" })
@@ -2720,7 +2730,7 @@ function show_settings(in_str) {
     });
 
 
-    VK.api("getUserSettings", function (r) {
+    VK.api('getUserSettings', function (r) {
         if ((r.response & 1) != 1) {
             var subs_cmnt_div = document.createElement("div");
             $(subs_cmnt_div).addClass("setting_block").css({ "text-align": "center", "margin": "auto", "width": "400px" });
@@ -2776,7 +2786,7 @@ function save_nn() {
     }).done(function (r) {
         if (r) {
             for (var uname in user_author) {
-                if (r[uname] == '9') {
+                if (r[uname] === '9') {
                     save_nick_msg.append('<span style="color:red; margin-left: 10px">' + user_author[uname].label + ': уже занят</span>').show().delay(2000).fadeOut('fast');
                 }
             }
@@ -2789,18 +2799,23 @@ function save_nn() {
 }
 
 function plural_number(count, arg0, arg1, arg2, arg3) {
+    // convert to a number from a possible string
+    count = +count;
     var result = arg0;
     var last_digit = count % 10;
     var last_two_digits = count % 100;
-    if (last_digit == 1 && last_two_digits != 11) {
+    if (last_digit === 1 && last_two_digits !== 11) {
         result += arg1;
     }
-    else if ((last_digit == 2 && last_two_digits != 12)
-    || (last_digit == 3 && last_two_digits != 13)
-    || (last_digit == 4 && last_two_digits != 14))
+    else if ((last_digit === 2 && last_two_digits !== 12) ||
+     (last_digit === 3 && last_two_digits !== 13) ||
+     (last_digit === 4 && last_two_digits !== 14)) {
         result += arg2;
-    else
+    }
+    else {
         result += arg3;
+    }
+    
     return result;
 }
 
@@ -2885,7 +2900,7 @@ function bj_play(material_id, audio_copy_data, file_url, pl, beat_artist, beat_t
         $('#bj_comment_track_link').off('click').hide();
     }
     construct_player(file_url, pl, beat_artist, beat_title);
-};
+}
 
 function construct_player(file_url, pl, artist, title) {
 
@@ -2914,7 +2929,7 @@ function construct_player(file_url, pl, artist, title) {
     //else {
     //}
 
-};
+}
 
 
 var zx = {
@@ -2948,24 +2963,25 @@ var zx = {
           cache: true
         }).done(function (r) {
             var i_max = r.length;
-            if (i_max == 0) {
+            if (i_max === 0) {
                 $(gm_div).css({ "padding": "8px", "text-align": "center" }).html("Нет произведений");
                 return;
             }
+            
             $(gm_div).empty();
             for (var i = 0; i < i_max; i++) {
                 var idiv = document.createElement("div");
                 $(idiv).addClass("material_div");
                 $(idiv).on("click", { mtype: r[i].mtype, id: r[i].id, mname: r[i].mname }, function (event) {
                     var btl_type = event.data.mtype + "_battle";
-                    var u_n = (btl_type == "beat_battle") ? user_author.beatmaker_name.value : user_author.nick_name.value;
+                    var u_n = (btl_type === 'beat_battle') ? user_author.beatmaker_name.value : user_author.nick_name.value;
 
                     get_flow(event.data.id, null, u_n, event.data.mname, btl_type, "material_container");
                     $('#btl_list_sub').hide();
-                })
+                });
 
                 var ispan = document.createElement("span");
-                ispan.appendChild(document.createTextNode(r[i].mname))
+                ispan.appendChild(document.createTextNode(r[i].mname));
                 $(ispan).addClass("link_view");
                 idiv.appendChild(ispan);
 
@@ -2982,10 +2998,10 @@ var zx = {
                     $(bucno).css({ "float": "right", "color": "#B61039" });
                     idiv.appendChild(bucno);
 
-                };
+                }
 
                 gm_div.appendChild(idiv);
-            };
+            }
         });
     },
     get_referrer_users: function () {
@@ -3002,11 +3018,11 @@ var zx = {
                 $('#flow_content').empty();
                 var user_count = (event.data.user_arr).length;
 
-                if (user_count == 0) {
-                    $('#flow_content').append('<p>Нет приглашённых пользователей</p>')
+                if (user_count === 0) {
+                    $('#flow_content').append('<p>Нет приглашённых пользователей</p>');
                 }
                 else {
-                    $('#flow_content').append('<h5>Приглашённые пользователи</h5>')
+                    $('#flow_content').append('<h5>Приглашённые пользователи</h5>');
                 }
                 for (var ilink = 0; ilink < user_count; ilink++) {
                     var a_link = document.createElement("a");
@@ -3015,7 +3031,7 @@ var zx = {
                     var div_link = document.createElement("div");
                     div_link.appendChild(a_link);
                     $(div_link).css("padding", "4px");
-                    $('#flow_content').append(div_link)
+                    $('#flow_content').append(div_link);
                 }
 
                 //$('#flow_content').append('<p>Способы приглашения пользователей:</p>');
@@ -3029,7 +3045,7 @@ var zx = {
             });
         });
     }
-}
+};
 
 // function show_marquee_dialog() {
     // $('#out_header_name').html("Размещение объявления в бегущей строке");
@@ -3110,17 +3126,26 @@ function coin_transfer(recipient_username, coin_sum, msg) {
         coin_sum: coin_sum,
         msg: msg
     };
-    ajaxRequest("coin_transfer", jd, {}).done(function () {
+    
+    ////ajaxRequest("coin_transfer", jd, {})
+    
+    $.ajax('{{conf.reqUrl}}/api/coin-transfer', {
+              type: 'POST',
+              contentType: 'application/json;charset=utf-8',
+              data: JSON.stringify(jd),
+              xhrFields: {
+                withCredentials: true
+              }
+        }).done(function () {
         out_window_hide();
         update_balance_string();
-        event_msg_show("Средства успешно переведены");
-    }).fail(function (e) {
-        var json_e = JSON.parse(e.responseText)
-
-        if (json_e.code >= 200 && json_e.code < 300) {
-            out_window_hide();
-            event_msg_show(json_e.message);
-        }
+        event_msg_show('Средства успешно переведены');
+    }).fail(function (jqXhr) {
+				if (jqXhr.status === 422) {
+					var resJson = jqXhr.responseJSON;
+					out_window_hide();
+          event_msg_show(resJson.errId);
+				}
     });
 }
 
@@ -3165,10 +3190,6 @@ var dbt = {
         var inner_div = document.createElement("div");
         $('#out_content').html(inner_div);
 
-
-
-
-
         //вступительный текст
         $(inner_div).append(
             '<h5>Информация о вашем баттле на главной странице приложения</h5>',
@@ -3180,9 +3201,7 @@ var dbt = {
         for (var key in battle_types) {
             $(battle_type_input).append('<option value="' + key + '">' + battle_types[key].battle_name + '</option>');
         }
-        $(inner_div).append(
-            '<h5>Тип баттла:</h5>'
-            , battle_type_input);
+        $(inner_div).append('<h5>Тип баттла:</h5>', battle_type_input);
 
         //сезон, номер баттла
         var battle_number_input = document.createElement("input");
@@ -3269,3 +3288,46 @@ var dbt = {
 
     }
 };
+
+$(function () {
+    auth({
+        login_on_done: set_after_auth,
+        login_progress: 1
+    });
+    set_drag();
+
+    try {
+        VK.init(function () {
+            $("#friends_invite_link").on("click", function () { VK.callMethod("showInviteBox"); });
+
+            VK.Widgets.Like("vk_like", { type: "button", width: 180, pageTitle: 'Баттл Естественный', pageDescription: 'Текстовый баттл. Аудиобаттл. Каталог битов. Принять участие можно в любой момент.', pageUrl: 'http://vk.com/app2644762', height: 20 });
+            VK.Widgets.Group("vk_group_news", { mode: 2, width: "480", height: "600", wide: 1 }, 31257938);
+            VK.Widgets.Comments("vk_battle_chat", { limit: 1, width: "480", height: "600", autoPublish: 0, attach: false, pageURL: "//vk.com/app2644762" }, 8642);
+            VK.addCallback('onOrderSuccess', function () {
+                // params: order_id
+                update_balance_string();
+            });
+        });    
+    }
+    catch (e) {
+        console.log(e);
+    }
+    battleplayer = new MediaElementPlayer("#battleplayer", {
+        success: function () {
+            // params: mediaElement, domObject
+            //mediaElement.play();
+            get_track_from_wall();
+            //get_main_track();
+        }
+    });
+    
+
+    //var p = $('.popup__overlay');
+    $('.popup__overlay').on("click", function (pov) {
+        var e = pov || window.event;
+        if (e.target == this) {
+            $('.popup__overlay').hide();
+        }
+    });
+    //   console.log($('*').length);
+});

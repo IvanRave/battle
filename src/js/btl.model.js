@@ -608,10 +608,10 @@
             return;
 
             // todo: check balance
-            if (btlApp.viewModel.currentUserProfile().balance() < self.openPrice) {
-                showNotEnoughMoneyNotification();
-                return;
-            }
+            // if (btlApp.viewModel.currentUserProfile().balance() < self.openPrice) {
+                // showNotEnoughMoneyNotification();
+                // return;
+            // }
         };
 
         // Non-persisted properties
@@ -629,4 +629,4 @@
     datacontext.roundMaterial = roundMaterial;
     datacontext.material = material;
     datacontext.boutUnit = boutUnit;
-})(ko, btlApp.datacontext);
+})(ko, window.btlApp.datacontext);

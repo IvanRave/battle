@@ -13,7 +13,7 @@ module.exports = function(grunt) {
       '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
       '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
       ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
-    trgt: isProd ? 'dist' : 'dev',
+    trgt: isProd ? 'dst' : 'dev',
     src: 'src',
     // Task configuration
     clean: {
@@ -106,7 +106,7 @@ module.exports = function(grunt) {
 					port : 21,
 					authKey : 'key1'
 				},
-				src : '<%= trgt %>',
+				src : 'dst',
 				dest : '/site/wwwroot/'
 			}
 		}

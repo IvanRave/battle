@@ -55,41 +55,41 @@ module.exports = function(grunt) {
     },
     assemble: {
       options: {
-          engine: 'handlebars',
-          data: ['package.json'],
-          // Build configuration properties
-          conf: {
-              // Request url (begin of the path)
-              // if exists - other domain (CORS requests - for local testing and side programs)
-              // if empty - the same domain (simple requests)
-              // Example {{requrl}}/api/values
-              reqUrl: reqUrl,
-              isProd: isProd
-          }
+        engine: 'handlebars',
+        data: ['package.json'],
+        // Build configuration properties
+        conf: {
+          // Request url (begin of the path)
+          // if exists - other domain (CORS requests - for local testing and side programs)
+          // if empty - the same domain (simple requests)
+          // Example {{requrl}}/api/values
+          reqUrl: reqUrl,
+          isProd: isProd
+        }
       },
       // Assemble js files: replace {{}} to assemble data
       js: {
-          options: {
-              ext: '.js'
-          },
-          files: [{
-              expand: true,
-              cwd: '<%= src %>/js/',
-              src: ['**/*.js'],
-              dest: '<%= trgt %>/js/'
-          }]
+        options: {
+          ext: '.js'
+        },
+        files: [{
+          expand: true,
+          cwd: '<%= src %>/js/',
+          src: ['**/*.js'],
+          dest: '<%= trgt %>/js/'
+        }]
       }
     },
     connect: {
-        main: {
-            options: {
-                //  //true, // Or need url string
-                open: 'http://localhost:44344/btl.html?viewer_id=19064903&auth_key=1q2w3e4r5t6y7u8i9o',
-                keepalive: true,
-                port: 44344,
-                base: '<%= trgt %>'
-            }
+      main: {
+        options: {
+          //  //true, // Or need url string
+          open: 'http://localhost:44344/btl.html?viewer_id=19064903&auth_key=1q2w3e4r5t6y7u8i9o',
+          keepalive: true,
+          port: 44344,
+          base: '<%= trgt %>'
         }
+      }
     },
     'gh-pages': {
       main: {
@@ -99,17 +99,17 @@ module.exports = function(grunt) {
         src: '**/*'
       }
     },
-    'ftp-deploy' : {
-			build : {
-				auth : {
-					host : 'waws-prod-am2-001.ftp.azurewebsites.windows.net',
-					port : 21,
-					authKey : 'key1'
-				},
-				src : 'dst',
-				dest : '/site/wwwroot/'
-			}
-		}
+    'ftp-deploy': {
+      build: {
+        auth: {
+          host: 'waws-prod-am2-001.ftp.azurewebsites.windows.net',
+          port: 21,
+          authKey: 'key1'
+        },
+        src: 'dst',
+        dest: '/site/wwwroot/'
+      }
+    }
   });
 
   // These plugins provide necessary tasks
@@ -120,7 +120,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-gh-pages');
   grunt.loadNpmTasks('assemble');
   grunt.loadNpmTasks('grunt-ftp-deploy');
-  
+
   // Default task 
   // 'jshint',
   grunt.registerTask('default', ['clean', 'copy', 'assemble']);

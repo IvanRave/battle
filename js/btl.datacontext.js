@@ -4,8 +4,6 @@ window.btlApp.datacontext = (function () {
     // Private
     function clearErrorMessage(entity) { entity.errorMessage(null); }
 
-    var battleApiUrl = "https://battle-api.azurewebsites.net/";
-
     function ajaxRequest(type, url, data, dataType) { // Ajax helper
         $('.spinner').show();
 
@@ -24,7 +22,10 @@ window.btlApp.datacontext = (function () {
             ////contentType: "application/json",
             cache: false,
             type: type,
-            data: stringifyData
+            data: stringifyData,
+            xhrFields: {
+             withCredentials: true
+            }
         };
 
         return $.ajax(url, options).always(function () {
@@ -33,15 +34,15 @@ window.btlApp.datacontext = (function () {
     }
 
     // routes (uqp = url query parameters)
-    function userProfileUrl() { return "/api/userprofile/"; }
-    function bankOperationUrl() { return "/api/bankoperation/"; }
-    function roundMaterialUrl(uqp) { return "/api/roundmaterial/" + (uqp ? ("?" + $.param(uqp)) : ""); }
-    function materialUrl(uqp) { return "/api/material/" + (uqp ? ("?" + $.param(uqp)) : ""); }
-    function boutUnitUrl(uqp) { return "/api/boutunit/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function userProfileUrl() { return "//battle.azurewebsites.net/api/userprofile/"; }
+    function bankOperationUrl() { return "//battle.azurewebsites.net/api/bankoperation/"; }
+    function roundMaterialUrl(uqp) { return "//battle.azurewebsites.net/api/roundmaterial/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function materialUrl(uqp) { return "//battle.azurewebsites.net/api/material/" + (uqp ? ("?" + $.param(uqp)) : ""); }
+    function boutUnitUrl(uqp) { return "//battle.azurewebsites.net/api/boutunit/" + (uqp ? ("?" + $.param(uqp)) : ""); }
     function aboutUrl() { return "about.html"; }
     function theoryUrl() { return "napisanie_tekstov.html"; }
 
-    function serviceUrl(methodName) { return "wservice/wcfbase.svc/" + methodName; }
+    function serviceUrl(methodName) { return "//battle.azurewebsites.net/wservice/wcfbase.svc/" + methodName; }
 
     // BattleType
     function getBattleTypeList() {
@@ -75,7 +76,7 @@ window.btlApp.datacontext = (function () {
 
     // Battle
     function getBattleSeasonList() {
-        return ajaxRequest("GET", battleApiUrl + "battle-season");
+        return ajaxRequest("GET", "//battle.azurewebsites.net/api/battle-season");
     }
 
     function createBattleSeason(data) {
@@ -110,11 +111,11 @@ window.btlApp.datacontext = (function () {
 
     // Battle round
     function getCurrentBattleRound(battleSeasonId) {
-        return ajaxRequest("GET", battleApiUrl + "battle-season/" + battleSeasonId + "/battle-round/current-item");
+        return ajaxRequest("GET", "//battle.azurewebsites.net/api/battle-season/" + battleSeasonId + "/battle-round/current-item");
     }
 
     function getHistoryBattleRoundList(battleId) {
-        return ajaxRequest("GET", battleApiUrl + "battle/" + battleId + "/battle-round/previous-list");
+        return ajaxRequest("GET", "//battle.azurewebsites.net/api/battle/" + battleId + "/battle-round/previous-list");
     }
 
     function createBattleRound(data, parent) {
@@ -157,11 +158,6 @@ window.btlApp.datacontext = (function () {
         return new datacontext.boutUnit(data, parent);
     }
 
-    function openBoutUnit(boutUnitId) {
-        return ajaxRequest("GET", battleApiUrl + "bout-unit/" + boutUnitId + "/open");
-        ////return ajaxRequest("POST", serviceUrl("OpenBoutUnit"), { id: id });
-    }
-
     var datacontext = {
         // battle type
         getBattleTypeList: getBattleTypeList,
@@ -192,8 +188,7 @@ window.btlApp.datacontext = (function () {
         getMaterialList: getMaterialList,
         // bout unit
         getBoutUnitList: getBoutUnitList,
-        createBoutUnit: createBoutUnit,
-        openBoutUnit: openBoutUnit
+        createBoutUnit: createBoutUnit
     };
 
     return datacontext;

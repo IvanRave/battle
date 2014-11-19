@@ -94,7 +94,7 @@ module.exports = function(grunt) {
     'gh-pages': {
       main: {
         options: {
-          base: '<%= trgt %>'
+          base: 'dst'
         },
         src: '**/*'
       }

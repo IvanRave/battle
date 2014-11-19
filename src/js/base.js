@@ -2523,7 +2523,7 @@ function get_round_result(round_chislo, battle_type, battle_number) {
                 else {
                     $('#battle_place_' + w_key).html('<span style="color:#777">текст не сдан</span>');
                 }
-                $('#priz_battle_place_' + w_key).html('приз: ' + (w_key == 0 ? '10' : '7') + ' голосов');
+                // $('#priz_battle_place_' + w_key).html('приз: ' + (w_key == 0 ? '10' : '7') + ' голосов');
             }
             return;
         }

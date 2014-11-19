@@ -9,7 +9,10 @@ window.btlApp.datacontext = (function () {
 
         var stringifyData = null;
         if (data) {
-            if (data.toJson) {
+	  if (typeof data === "string"){
+	    stringifyData = data;
+	  }
+           else if (data.toJson) {
                 stringifyData = data.toJson();
             }
             else {
@@ -35,6 +38,7 @@ window.btlApp.datacontext = (function () {
 
     // routes (uqp = url query parameters)
     function userProfileUrl() { return "{{conf.reqUrl}}/api/userprofile/"; }
+    function themeUrl(){ return "{{conf.reqUrl}}/api/theme/";}
     function bankOperationUrl() { return "{{conf.reqUrl}}/api/bankoperation/"; }
     function roundMaterialUrl(uqp) { return "{{conf.reqUrl}}/api/roundmaterial/" + (uqp ? ("?" + $.param(uqp)) : ""); }
     function materialUrl(uqp) { return "{{conf.reqUrl}}/api/material/" + (uqp ? ("?" + $.param(uqp)) : ""); }
@@ -78,6 +82,10 @@ window.btlApp.datacontext = (function () {
     function getBattleSeasonList() {
         return ajaxRequest("GET", "{{conf.reqUrl}}/api/battle-season");
     }
+
+  function postTheme(themeDto){
+    return ajaxRequest("POST", themeUrl(), "tname=" + encodeURIComponent(themeDto.tname));
+  }
 
     function createBattleSeason(data) {
         return new datacontext.battleSeason(data); // from model
@@ -188,7 +196,8 @@ window.btlApp.datacontext = (function () {
         getMaterialList: getMaterialList,
         // bout unit
         getBoutUnitList: getBoutUnitList,
-        createBoutUnit: createBoutUnit
+      createBoutUnit: createBoutUnit,
+      postTheme: postTheme
     };
 
     return datacontext;

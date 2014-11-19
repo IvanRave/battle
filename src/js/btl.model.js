@@ -233,12 +233,15 @@
 
         self.suggestTheme = function () {
             if (self.themeToSuggest()) {
-                ajaxRequest("add_theme",
+	      datacontext.postTheme({ 
+                tname: self.themeToSuggest()
+              });
+  /*              ajaxRequest("add_theme",
                 {
                     tname: self.themeToSuggest()
                 }, {
                     progress: 1
-                });
+                });*/
 
                 self.themeToSuggest('');
             }

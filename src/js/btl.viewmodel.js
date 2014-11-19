@@ -90,24 +90,5 @@ window.btlApp.viewModel = (function (ko, datacontext) {
         });
     };
 
-    // chat
-    ////vm.hub = $.connection.chatHub;
-
-
-    ////vm.showLetterCatch = function () {
-    ////    var bodyDom = document.createElement('div');
-
-    ////    var submitFunction = function () {
-    ////        // view rules
-    ////        closeModalWindow();
-
-    ////        $('#out_header_name').html(nickname);
-    ////        $('#out_content').html('<div></div>');
-    ////        $('#out_window').show().focus();
-    ////    };
-
-
-    ////};
-
     return vm;
 })(ko, window.btlApp.datacontext);

@@ -232,6 +232,9 @@
         self.themeToSuggest = ko.observable('');
 
         self.suggestTheme = function () {
+            self.themeToSuggest('');
+            alert('Отключено. Просьба оставлять свои предложения по темам в группе баттла в обсуждении.');
+            return;
             if (self.themeToSuggest()) {
 	      datacontext.postTheme({ 
                 tname: self.themeToSuggest()

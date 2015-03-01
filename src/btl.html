@@ -175,8 +175,17 @@
                     <div class="pull-left" style="width: 540px; padding-left: 10px">
                         <div class="tab-content">
                             <div class="tab-pane active" id="btm_round" data-bind="with: currentBattleRound">
-                                <div class="header_dark_on_white">Текущий раунд</div>
-                                <div class="pad-wrap">
+                                <div class="header_dark_on_white">Раунд</div>
+																<div class="pad-wrap" data-bind="if: $parent.btlType === 'text_battle'">
+																	<div class="clearfix">
+                                        <div style="text-align: center">
+                                            <h4>Баттл закрыт</h4>
+                                            <span>проводится набор на командный текстовый баттл </span>
+																						<a href="//vk.com/battle_com_ru" target="_blank">в группе баттла</a>
+                                        </div>
+                                  </div>
+																</div>
+                                <div class="pad-wrap" data-bind="if: $parent.btlType !== 'text_battle'">
                                     <div data-bind="foreach: themeList" class="clearfix">
                                         <div class="theme-block">
                                             <h4 data-bind="text: name"></h4>
@@ -207,7 +216,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div style="margin-top: 8px" class="clearfix">
+																
+                                <div style="margin-top: 8px" class="clearfix" data-bind="if: $parent.btlType !== 'text_battle'">
                                     <div class="pull-left" style="width: 260px">
                                         <div class="header_dark_on_white">Участие: <span data-bind="text: activeRoundMaterialCount() + plural_number(activeRoundMaterialCount(), ' участник', '', 'а', 'ов')"></span></div>
                                         <div class="pad-wrap">
@@ -1084,7 +1094,7 @@
                         <div data-bind="foreach: ko.utils.arrayFilter($parent.battleSeasonList(), function (item) { return (item.btlType === (battleTypeItem.id + '_battle')); })">
                             <div class="battle_block" data-bind="click: selectBattleSeason">
                                 <div style="text-align: center; padding: 8px 0 0 0; font-weight: bold; text-shadow: 1px 1px 1px #f1f1f1" data-bind="text: fullBtlName"></div>
-                                <div style="text-align: center; padding: 0 0 8px 0; font-size: 10px; text-shadow: 1px 1px 1px #f1f1f1" data-bind="text: isOneRound === true ? 'бой в один раунд' : ('основной баттл: раунд №' + roundCount)"></div>
+                                <div style="text-align: center; padding: 0 0 8px 0; font-size: 10px; text-shadow: 1px 1px 1px #f1f1f1" data-bind="text: isOneRound === true ? 'бой в один раунд' : ('баттл закрыт')"></div>
                             </div>
                         </div>
                     </div>
